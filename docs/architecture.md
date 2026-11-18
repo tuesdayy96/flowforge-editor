@@ -42,6 +42,12 @@ The presentation layer uses typed Korean and English dictionaries in `src/shared
 
 Graph validation emits stable codes and parameters. The validation panel translates them on render, so an existing result can be read in either language. Document and storage errors also retain codes or structured details for presentation.
 
+## Quality and delivery
+
+Vitest covers the domain, document model, application state, storage and shortcut handling. V8 reports coverage for workflow domain, model, service and store modules. Playwright uses a fresh browser context per scenario and exercises the same production output that a static host serves.
+
+CI uses Node.js 24 and the npm lockfile. Chromium failures retain screenshots and traces for inspection. The app has a single HTML entry point, and Vite resolves asset URLs for the configured base path. Root hosting only needs the `dist/` output. Drafts and editor preferences remain local to each browser origin.
+
 ## Tooling references
 
 - [Vite runtime requirements](https://vite.dev/guide/)

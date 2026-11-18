@@ -1,64 +1,74 @@
 # FlowForge
 
-FlowForge is a browser-based visual workflow editor built with React and TypeScript.
+[한국어](README.ko.md)
+
+## Project overview
+
+FlowForge is a browser-based visual workflow editor. Arrange nodes, validate the graph, and share editable JSON drafts without a backend.
+
+## Preview
+
+![Editor with the node palette, canvas, and properties panel](docs/assets/editor.png)
+
+| Multi-Start and Merge                                             | Validation results                                                 | User guide                                              |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| ![Two Start paths converge at Merge](docs/assets/multi-start.png) | ![Validation results above the canvas](docs/assets/validation.png) | ![User guide open in the editor](docs/assets/guide.png) |
+
+## Features
+
+- Start, Action, Condition, Merge, and End nodes. Multiple Start paths can converge at Merge.
+- Property editing, multi-selection, copy and paste, and undo and redo.
+- Validation for handles, cycles, required outputs, reachability, and paths to End.
+- Autosave one draft per browser origin, restore its viewport, and import or export versioned JSON.
+- Minimap, pan, zoom, and Fit view.
+- Korean and English UI, a user guide, and a five-step tour.
+
+## Architecture
+
+React Flow renders the canvas, Zustand manages editor state, and pure functions validate the graph. Zod checks the document format at the storage boundary. See [Architecture](docs/architecture.md) and [Document format](docs/data-model.md).
 
 ## Getting started
 
-Use Node.js 24 LTS and npm.
+Use Node.js 24 and npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. The app runs entirely in the browser.
+Open the URL printed by Vite. The editor starts in Korean. Switch to English in the toolbar or the first-visit tour.
 
-## Edit a workflow
+## Usage
 
-The editor opens in Korean by default. Choose 한국어 or English in the toolbar. The Help dialog contains a bilingual guide and a five-step tour. The tour opens on the first visit and can be restarted from Help.
+1. Add nodes from the palette and connect output handles to inputs. Connect both `true` and `false` outputs on a Condition.
+2. Select a node to edit its name and description. Use Ctrl/Cmd-click or Shift-drag for multi-selection.
+3. Run **Validate** and use **Locate** to jump to a node with an issue.
+4. Rename the workflow in the toolbar. Press Enter or leave the field to save, or press Escape to cancel.
+5. Use **Export JSON** to save a copy. Import validates the file and confirms replacement.
 
-- A new draft starts with one Start node. Add more Start nodes, or add Action, Condition, Merge and End from the palette.
-- Drag nodes by their cards and connect an output to an input. Each output supports one connection. Condition's true and false outputs are independent. Connections that would create a cycle are blocked.
-- Select one node to edit its label and description. Shift-drag a selection box to select multiple nodes.
-- Select a node or connection and use **Delete selection**, Delete or Backspace. Deleting any node, including a Start, removes its connections.
-- Drag the canvas to pan, scroll to zoom, and use the canvas controls to zoom or fit the graph.
+Canvas shortcuts include Ctrl/Cmd+Z for undo, Ctrl/Cmd+Shift+Z or Ctrl+Y for redo, Ctrl/Cmd+C or V for copy or paste, Ctrl/Cmd+A to select all, Delete or Backspace to delete, and Ctrl/Cmd+0 to fit. Text fields keep their native shortcuts.
 
-- Select **Validate** to check whether the workflow is ready to run. Use **Locate** beside an issue to select its node and center the canvas on it. After adding or removing nodes or connections, run Validate again.
-- Each Start is an independent entry point. A Merge brings multiple paths together visually and has one output. The editor does not define execution synchronization for Merge.
+If a local draft fails to restore, the editor keeps it until you confirm replacement.
 
-## Editor shortcuts
-
-Click or tab to the canvas to use editor shortcuts. Text fields keep their standard keyboard behavior. Use Ctrl/Cmd-click or Shift-drag to select several nodes and move, copy or delete them together.
-
-| Action           | Windows / Linux        | macOS              |
-| ---------------- | ---------------------- | ------------------ |
-| Undo             | Ctrl+Z                 | Cmd+Z              |
-| Redo             | Ctrl+Shift+Z or Ctrl+Y | Cmd+Shift+Z        |
-| Copy / Paste     | Ctrl+C / Ctrl+V        | Cmd+C / Cmd+V      |
-| Select all       | Ctrl+A                 | Cmd+A              |
-| Delete selection | Delete / Backspace     | Delete / Backspace |
-| Fit view         | Ctrl+0                 | Cmd+0              |
-
-The toolbar also provides Undo, Redo, Copy, Paste and Fit view. Use MiniMap to toggle the overview and drag or zoom there to navigate the canvas. Copy and Paste use the editor clipboard and duplicate links between selected nodes. Undo and Redo keep up to 100 edits in the current document session.
-
-## Save and share a draft
-
-- Edit the workflow name in the toolbar. Press Enter or leave the field to save it, or press Escape to cancel.
-
-- Edits and the canvas viewport are saved automatically in this browser. The toolbar reports when the local draft was saved or when a write failed. Refreshing restores the last saved draft.
-- **Export JSON** downloads the current draft with its node IDs, positions and connections. **Import JSON** checks the file and asks before replacing the current workflow. A structurally valid draft can be imported even when its graph is incomplete.
-- If the browser cannot restore its draft, the editor preserves the stored value and pauses autosave. **Replace local draft** overwrites it after confirmation. A failed write can be retried, and the current document can be exported.
-
-See [Document format](docs/data-model.md) for the version and limits.
-
-## Verification
+## Testing
 
 ```sh
 npm run typecheck
 npm run lint
 npm run format:check
-npm run test
+npm test
+npm run test:coverage
 npm run build
+npx playwright install chromium
+npm run test:e2e
 ```
 
-Use `npm run preview` to serve the production build locally. See [Architecture](docs/architecture.md) for the project structure.
+## Technical decisions
+
+- Document validation is separate from graph validation, so incomplete drafts can be saved.
+- Storage keeps document fields only. History stays in memory, and paste remaps IDs and connections.
+- Merge represents a visual junction. Workflow execution is outside the editor's scope.
+
+## License
+
+A license has yet to be selected.

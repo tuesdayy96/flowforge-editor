@@ -37,6 +37,44 @@ afterEach(() => {
 })
 
 describe('workflow autosave', () => {
+  it('stores a renamed draft without editing the graph or creating history', () => {
+    const storage = storageWith()
+    persistence = connectWorkflowPersistence(() => storage)
+    const before = getState()
+
+    before.renameDocument('  Order intake  ')
+    vi.advanceTimersByTime(SAVE_DELAY)
+
+    expect(deserializeDocument(storage.getItem()!).name).toBe('Order intake')
+    expect(getState().nodes).toBe(before.nodes)
+    expect(getState().history).toBe(before.history)
+    expect(getState().graphRevision).toBe(before.graphRevision)
+    before.renameDocument('Order intake')
+    vi.runAllTimers()
+    expect(storage.setItem).toHaveBeenCalledTimes(1)
+  })
+
+  it('blocks writes after a storage read failure until replacement is confirmed', () => {
+    const storage = storageWith('existing draft')
+    storage.getItem.mockImplementationOnce(() => {
+      throw new DOMException('Storage is unavailable', 'SecurityError')
+    })
+    persistence = connectWorkflowPersistence(() => storage)
+    getState().renameDocument('Current draft')
+    vi.runAllTimers()
+    persistence.flush()
+
+    expect(persistence.status.getState()).toEqual({
+      kind: 'restore-failed',
+      detail: 'storageRead',
+    })
+    expect(storage.setItem).not.toHaveBeenCalled()
+    expect(storage.getItem()).toBe('existing draft')
+
+    persistence.replaceLocalDraft()
+    expect(deserializeDocument(storage.getItem()!).name).toBe('Current draft')
+  })
+
   it('restores multiple Starts and preserves their links into a Merge', () => {
     const storage = storageWith()
     persistence = connectWorkflowPersistence(() => storage)
