@@ -70,7 +70,3 @@ npm run test:e2e
 - Document validation is separate from graph validation, so incomplete drafts can be saved.
 - Storage keeps document fields only. History stays in memory, and paste remaps IDs and connections.
 - Merge represents a visual junction. Workflow execution is outside the editor's scope.
-
-## License
-
-A license has yet to be selected.
