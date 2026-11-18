@@ -156,24 +156,255 @@ h3 {
   background: var(--canvas);
 }
 
-.canvas-empty {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  width: max-content;
-  max-width: calc(100% - 32px);
-  padding: 13px 20px;
-  text-align: center;
-  pointer-events: none;
-  border: 1px solid var(--border);
-  border-radius: 10px;
+.node-card-description {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+button.node-card:hover {
+  border-color: var(--accent);
   background: var(--surface);
 }
 
-.canvas-empty .font-semibold {
-  color: var(--text);
-  font-size: 0.875rem;
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.toolbar-delete,
+.toolbar-validate {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+}
+
+.toolbar-validate {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent);
+  font-weight: 650;
+}
+
+.toolbar-validate:hover {
+  filter: brightness(0.92);
+}
+
+.validation-panel {
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  font-size: 0.8125rem;
+}
+
+.validation-heading,
+.validation-issue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+}
+
+.validation-heading {
+  justify-content: space-between;
+}
+
+.validation-count {
+  display: inline-block;
+  margin-left: 12px;
+  color: var(--muted);
+}
+
+.validation-issues {
+  display: grid;
+  gap: 6px;
+  max-height: 9rem;
+  margin-top: 8px;
+  padding: 4px;
+  overflow: auto;
+}
+
+.validation-severity {
+  min-width: 4rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.validation-severity--error {
+  color: var(--end);
+}
+
+.validation-severity--warning {
+  color: var(--condition);
+}
+
+.validation-panel button {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.toolbar-delete:enabled:hover {
+  color: var(--end);
+  border-color: var(--end);
+  background: var(--end-bg);
+}
+
+.toolbar-delete:disabled {
+  color: var(--muted);
+  background: var(--surface-muted);
+  opacity: 0.65;
+}
+
+.workflow-node {
+  position: relative;
+  width: 172px;
+  padding: 11px 12px;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--node-tone);
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 2px 6px rgb(24 36 57 / 8%);
+}
+
+.workflow-node--start {
+  --node-tone: var(--start);
+}
+
+.workflow-node--action {
+  --node-tone: var(--action);
+}
+
+.workflow-node--condition {
+  --node-tone: var(--condition);
+}
+
+.workflow-node--end {
+  --node-tone: var(--end);
+}
+
+.workflow-node-type {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 650;
+}
+
+.workflow-node p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  white-space: pre-wrap;
+}
+
+.react-flow__node.selected .workflow-node {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.workflow-node .react-flow__handle {
+  width: 11px;
+  height: 11px;
+  background: var(--node-tone);
+  border: 2px solid var(--surface);
+}
+
+.workflow-node .react-flow__handle.valid {
+  box-shadow: 0 0 0 3px var(--accent);
+}
+
+.workflow-branches {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 4px;
+}
+
+.workflow-branch {
+  position: relative;
+  padding-block: 3px;
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.workflow-branch .react-flow__handle {
+  right: -13px;
+}
+
+.workflow-branch--true .react-flow__handle {
+  background: var(--start);
+}
+
+.workflow-branch--false .react-flow__handle {
+  background: var(--end);
+}
+
+.react-flow__edge-path,
+.react-flow__connection-path {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.inspector-fields {
+  display: grid;
+  gap: 6px;
+  padding: 16px 14px;
+  font-size: 0.8125rem;
+}
+
+.inspector-fields dl {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.inspector-fields dt,
+.inspector-fields label {
+  font-weight: 650;
+}
+
+.inspector-fields dd {
+  margin-bottom: 8px;
+}
+
+.inspector-node-id {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-family: ui-monospace, monospace;
+}
+
+.inspector-fields input,
+.inspector-fields textarea {
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-muted);
+}
+
+.inspector-fields textarea {
+  resize: vertical;
+}
+
+.node-card:focus-visible,
+.toolbar-delete:focus-visible,
+.toolbar-validate:focus-visible,
+.validation-panel button:focus-visible,
+.inspector-fields :is(input, textarea):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .react-flow__controls button:focus-visible {

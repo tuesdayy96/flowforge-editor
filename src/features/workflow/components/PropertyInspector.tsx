@@ -1,15 +1,64 @@
+import { useId } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+import { nodeLabels, type WorkflowNode } from '../model/workflowNode'
+import { selectSelectedNodeIds, useWorkflowStore } from '../store/workflowStore'
+
+function NodeProperties({ node }: { node: WorkflowNode }) {
+  const id = useId()
+  const updateNode = useWorkflowStore((state) => state.updateNode)
+
+  return (
+    <div className="inspector-fields">
+      <dl>
+        <dt>Node type</dt>
+        <dd>{nodeLabels[node.type]}</dd>
+        <dt>Node ID</dt>
+        <dd className="inspector-node-id">{node.id}</dd>
+      </dl>
+      <label htmlFor={`${id}-label`}>Label</label>
+      <input
+        id={`${id}-label`}
+        value={node.data.label}
+        onChange={(event) => updateNode(node.id, { label: event.target.value })}
+      />
+      <label htmlFor={`${id}-description`}>Description</label>
+      <textarea
+        id={`${id}-description`}
+        rows={4}
+        value={node.data.description}
+        onChange={(event) =>
+          updateNode(node.id, { description: event.target.value })
+        }
+      />
+    </div>
+  )
+}
+
 export function PropertyInspector() {
+  const selectedNodeIds = useWorkflowStore(useShallow(selectSelectedNodeIds))
+  const node = useWorkflowStore((state) =>
+    selectedNodeIds.length === 1
+      ? state.nodes.find((item) => item.id === selectedNodeIds[0])
+      : undefined,
+  )
+
   return (
     <aside className="panel inspector" aria-labelledby="inspector-title">
       <div className="panel-heading">
         <h2 id="inspector-title">Properties</h2>
       </div>
-      <div className="inspector-empty">
-        <h3>No node selected</h3>
-        <p>
-          Node properties will appear here when node editing becomes available.
-        </p>
-      </div>
+      {node ? (
+        <NodeProperties node={node} />
+      ) : (
+        <div className="inspector-empty">
+          <h3>
+            {selectedNodeIds.length > 1
+              ? `${selectedNodeIds.length} nodes selected`
+              : 'No node selected'}
+          </h3>
+          <p>Select one node to edit its properties.</p>
+        </div>
+      )}
     </aside>
   )
 }
