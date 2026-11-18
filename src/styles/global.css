@@ -1,0 +1,208 @@
+@layer theme, base, xyflow, components, utilities;
+@import 'tailwindcss';
+@import '@xyflow/react/style.css';
+
+:root {
+  color-scheme: light;
+  --surface: #fff;
+  --surface-muted: #f8fafc;
+  --canvas: #f5f7fb;
+  --canvas-dot: #c6cfde;
+  --border: #dce4ee;
+  --text: #182439;
+  --muted: #506177;
+  --accent: #4255cf;
+  --accent-text: #fff;
+  --start: #12614d;
+  --start-bg: #e4f6ee;
+  --action: #344da7;
+  --action-bg: #eaf0ff;
+  --condition: #805113;
+  --condition-bg: #fff1d8;
+  --end: #983b59;
+  --end-bg: #fbeaf0;
+  font-family: Inter, 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.editor {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.toolbar {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-mark,
+.node-symbol {
+  display: grid;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  font-size: 19px;
+  line-height: 1;
+}
+
+.brand-mark {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.workflow-title {
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 224px minmax(0, 1fr) 248px;
+}
+
+.panel {
+  min-width: 0;
+  background: var(--surface);
+}
+
+.palette {
+  border-right: 1px solid var(--border);
+}
+
+.inspector {
+  border-left: 1px solid var(--border);
+}
+
+.panel-heading,
+.canvas-heading {
+  padding: 17px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+h2,
+h3 {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.panel p,
+.canvas p {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.panel-heading p,
+.canvas-heading p,
+.inspector-empty p {
+  margin-top: 4px;
+}
+
+.node-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.node-card {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+  font-size: 0.875rem;
+}
+
+.node-symbol--start {
+  color: var(--start);
+  background: var(--start-bg);
+}
+.node-symbol--action {
+  color: var(--action);
+  background: var(--action-bg);
+}
+.node-symbol--condition {
+  color: var(--condition);
+  background: var(--condition-bg);
+}
+.node-symbol--end {
+  color: var(--end);
+  background: var(--end-bg);
+}
+
+.inspector-empty {
+  margin: 14px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+  background: var(--surface-muted);
+}
+
+.canvas {
+  display: grid;
+  grid-template-rows: auto minmax(360px, 1fr);
+  min-width: 0;
+}
+
+.canvas-surface {
+  position: relative;
+  background: var(--canvas);
+}
+
+.canvas-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 13px 20px;
+  text-align: center;
+  pointer-events: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.canvas-empty .font-semibold {
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.react-flow__controls button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 184px minmax(0, 1fr) 188px;
+  }
+}
+
+@media (max-width: 650px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .canvas {
+    grid-row: 1;
+  }
+
+  .palette,
+  .inspector {
+    border-inline: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .node-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
