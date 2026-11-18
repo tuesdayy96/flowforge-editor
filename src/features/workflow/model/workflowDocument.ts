@@ -1,6 +1,10 @@
 import { z } from 'zod'
 import { workflowPorts, type WorkflowNodeType } from '../domain/connection'
-import type { WorkflowEdge, WorkflowNode } from './workflowNode'
+import {
+  projectGraph,
+  type WorkflowEdge,
+  type WorkflowNode,
+} from './workflowNode'
 
 export const SCHEMA_VERSION = 1
 export const DOCUMENT_LIMITS = {
@@ -84,21 +88,7 @@ export function projectDocument({
     schemaVersion: SCHEMA_VERSION,
     id: documentId,
     name: documentName,
-    nodes: nodes.map(
-      ({ id, type, position: { x, y }, data: { label, description } }) => ({
-        id,
-        type,
-        position: { x, y },
-        data: { label, description },
-      }),
-    ),
-    edges: edges.map(({ id, source, sourceHandle, target, targetHandle }) => ({
-      id,
-      source,
-      sourceHandle,
-      target,
-      targetHandle,
-    })),
+    ...projectGraph({ nodes, edges }),
     viewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom },
   }
 }

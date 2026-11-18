@@ -30,9 +30,11 @@ Changesets are read without mutation. The store accepts canvas selection, moveme
 
 `workflowFiles.ts` reads bounded UTF-8 JSON files and exports the same document format. The toolbar asks for confirmation after parsing and document validation, then replaces the graph and immediately runs workflow validation on the imported document.
 
-## Later phases
+## Editing history and clipboard
 
-Undo and redo can record editor commands while treating restore and import as document replacement boundaries. Save status and viewport tracking have separate responsibilities from command history.
+The store records bounded snapshots of the persisted node and edge fields. A snapshot can restore a node, its incident edges and its original IDs together. Canvas drag callbacks and inspector focus/blur open and finish edit transactions, so repeated drag updates or keystrokes create one history entry when the final graph changed. Undo and Redo retain the current viewport and clear selection. Only topology changes invalidate existing graph validation results. Import and restore clear the history, while Undo and Redo results flow through normal autosave.
+
+The editor clipboard projects selected nodes and edges with both endpoints selected. Paste allocates fresh node and edge IDs, remaps endpoints, revalidates connections, and applies temporary selection and an increasing offset. The full paste is one edit. The canvas registers its own shortcut listener and removes it on unmount. Toolbar and shortcuts use the same store actions, and React Flow provides the MiniMap and multi-selection.
 
 ## Tooling references
 

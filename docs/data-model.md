@@ -19,6 +19,8 @@ Identifiers and handle names are 1–128 characters using ASCII letters, digits,
 
 The document excludes selection, dragging, measured dimensions and other React Flow internals. Restoring or importing applies the stored viewport and starts with an empty selection.
 
+History and clipboard data stay in memory. History snapshots use the document's node and edge fields and leave the current viewport and document metadata in place. Pasted nodes and edges receive new IDs, and edge endpoints are remapped to the new node IDs.
+
 The version check rejects unsupported numeric schema versions before the version 1 schema is applied. Schema validation checks document structure and references. Workflow validation checks whether the graph is ready to run. Incomplete drafts can be stored, exported and imported.
 
 LocalStorage uses `flowforge:workflow:current` for one draft per browser origin. Writes are debounced by 350 ms, with a flush on page hiding. If restoration fails, the app leaves the stored value in place until the user confirms a replacement.

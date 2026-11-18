@@ -3,14 +3,20 @@ import { validateWorkflow, type ValidationResult } from '../domain/validation'
 import { useWorkflowStore } from '../store/workflowStore'
 import type { WorkflowPersistence } from '../services/workflowPersistence'
 import { WorkflowFiles } from './WorkflowFiles'
+import {
+  WorkflowEditorActions,
+  type MiniMapControls,
+} from './WorkflowEditorActions'
 import { WorkflowSaveStatus } from './WorkflowSaveStatus'
 import { WorkflowValidation } from './WorkflowValidation'
 
 export function WorkflowToolbar({
   persistence,
+  showMiniMap,
+  toggleMiniMap,
 }: {
   persistence: WorkflowPersistence
-}) {
+} & MiniMapControls) {
   const [fileError, setFileError] = useState('')
   const [validation, setValidation] = useState<
     | {
@@ -54,6 +60,10 @@ export function WorkflowToolbar({
         </h1>
         <WorkflowSaveStatus persistence={persistence} />
         <div className="toolbar-actions">
+          <WorkflowEditorActions
+            showMiniMap={showMiniMap}
+            toggleMiniMap={toggleMiniMap}
+          />
           <WorkflowFiles onError={setFileError} />
           <button
             className="toolbar-validate"
@@ -68,6 +78,7 @@ export function WorkflowToolbar({
             className="toolbar-delete"
             type="button"
             disabled={!canDeleteSelection}
+            title="Delete selected nodes and links (Delete / Backspace)"
             onClick={removeSelection}
           >
             Delete selection

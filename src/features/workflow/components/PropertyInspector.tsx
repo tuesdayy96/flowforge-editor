@@ -4,9 +4,13 @@ import { DOCUMENT_LIMITS } from '../model/workflowDocument'
 import { nodeLabels, type WorkflowNode } from '../model/workflowNode'
 import { selectSelectedNodeIds, useWorkflowStore } from '../store/workflowStore'
 
-function NodeProperties({ node }: { node: WorkflowNode }) {
+type EditableNode = Pick<WorkflowNode, 'id' | 'type' | 'data'>
+
+function NodeProperties({ node }: { node: EditableNode }) {
   const id = useId()
   const updateNode = useWorkflowStore((state) => state.updateNode)
+  const beginEdit = useWorkflowStore((state) => state.beginEdit)
+  const finishEdit = useWorkflowStore((state) => state.finishEdit)
 
   return (
     <div className="inspector-fields">
@@ -21,6 +25,8 @@ function NodeProperties({ node }: { node: WorkflowNode }) {
         id={`${id}-label`}
         maxLength={DOCUMENT_LIMITS.label}
         value={node.data.label}
+        onFocus={() => beginEdit('property')}
+        onBlur={() => finishEdit('property')}
         onChange={(event) => updateNode(node.id, { label: event.target.value })}
       />
       <label htmlFor={`${id}-description`}>Description</label>
@@ -29,6 +35,8 @@ function NodeProperties({ node }: { node: WorkflowNode }) {
         maxLength={DOCUMENT_LIMITS.description}
         rows={4}
         value={node.data.description}
+        onFocus={() => beginEdit('property')}
+        onBlur={() => finishEdit('property')}
         onChange={(event) =>
           updateNode(node.id, { description: event.target.value })
         }
@@ -39,10 +47,13 @@ function NodeProperties({ node }: { node: WorkflowNode }) {
 
 export function PropertyInspector() {
   const selectedNodeIds = useWorkflowStore(useShallow(selectSelectedNodeIds))
-  const node = useWorkflowStore((state) =>
-    selectedNodeIds.length === 1
-      ? state.nodes.find((item) => item.id === selectedNodeIds[0])
-      : undefined,
+  const node = useWorkflowStore(
+    useShallow(({ nodes }) => {
+      if (selectedNodeIds.length !== 1) return
+      const selected = nodes.find((item) => item.id === selectedNodeIds[0])
+      if (selected)
+        return { id: selected.id, type: selected.type, data: selected.data }
+    }),
   )
 
   return (
@@ -51,7 +62,7 @@ export function PropertyInspector() {
         <h2 id="inspector-title">Properties</h2>
       </div>
       {node ? (
-        <NodeProperties node={node} />
+        <NodeProperties key={node.id} node={node} />
       ) : (
         <div className="inspector-empty">
           <h3>

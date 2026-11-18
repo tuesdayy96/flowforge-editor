@@ -15,6 +15,34 @@ export type WorkflowNode = Node<WorkflowNodeData, WorkflowNodeType> & {
 }
 export type WorkflowEdge = Edge
 
+export function projectGraph({
+  nodes,
+  edges,
+}: {
+  nodes: readonly WorkflowNode[]
+  edges: readonly WorkflowEdge[]
+}) {
+  return {
+    nodes: nodes.map(
+      ({ id, type, position: { x, y }, data: { label, description } }) => ({
+        id,
+        type,
+        position: { x, y },
+        data: { label, description },
+      }),
+    ),
+    edges: edges.map(({ id, source, sourceHandle, target, targetHandle }) => ({
+      id,
+      source,
+      sourceHandle,
+      target,
+      targetHandle,
+    })),
+  }
+}
+
+export type GraphSnapshot = ReturnType<typeof projectGraph>
+
 export function createWorkflowNode(
   type: WorkflowNodeType,
   position: XYPosition,
