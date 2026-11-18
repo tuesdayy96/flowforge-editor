@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n'
 import { useReactFlow } from '@xyflow/react'
 import { fitViewOptions } from '../hooks/useEditorShortcuts'
 import {
@@ -15,6 +16,7 @@ export function WorkflowEditorActions({
   showMiniMap,
   toggleMiniMap,
 }: MiniMapControls) {
+  const t = useTranslation()
   const canUndo = useWorkflowStore(selectCanUndo)
   const canRedo = useWorkflowStore(selectCanRedo)
   const canCopy = useWorkflowStore(({ nodes }) =>
@@ -34,55 +36,55 @@ export function WorkflowEditorActions({
       <button
         type="button"
         className="toolbar-file"
-        title="Undo (Ctrl / Cmd + Z)"
+        title={t('undoTip')}
         disabled={!canUndo}
         onClick={undo}
       >
-        Undo
+        {t('undo')}
       </button>
       <button
         type="button"
         className="toolbar-file"
-        title="Redo (Ctrl / Cmd + Shift + Z, or Ctrl + Y)"
+        title={t('redoTip')}
         disabled={!canRedo}
         onClick={redo}
       >
-        Redo
+        {t('redo')}
       </button>
       <button
         type="button"
         className="toolbar-file"
-        title="Copy selected nodes (Ctrl / Cmd + C)"
+        title={t('copyTip')}
         disabled={!canCopy}
         onClick={copySelection}
       >
-        Copy
+        {t('copy')}
       </button>
       <button
         type="button"
         className="toolbar-file"
-        title="Paste nodes (Ctrl / Cmd + V)"
+        title={t('pasteTip')}
         disabled={!canPaste}
         onClick={paste}
       >
-        Paste
+        {t('paste')}
       </button>
       <button
         type="button"
         className="toolbar-file"
-        title="Fit view (Ctrl / Cmd + 0)"
+        title={t('fitTip')}
         onClick={() => void fitView(fitViewOptions)}
       >
-        Fit view
+        {t('fit')}
       </button>
       <button
         type="button"
         className="toolbar-file"
-        title="Show or hide the canvas minimap"
+        title={t('minimapTip')}
         aria-pressed={showMiniMap}
         onClick={toggleMiniMap}
       >
-        MiniMap
+        {t('minimap')}
       </button>
     </>
   )

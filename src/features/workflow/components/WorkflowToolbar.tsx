@@ -1,8 +1,16 @@
+import { useTranslation } from '@/shared/i18n'
 import { useState } from 'react'
 import { validateWorkflow, type ValidationResult } from '../domain/validation'
+import {
+  DEFAULT_WORKFLOW_NAME,
+  DOCUMENT_LIMITS,
+} from '../model/workflowDocument'
 import { useWorkflowStore } from '../store/workflowStore'
 import type { WorkflowPersistence } from '../services/workflowPersistence'
-import { WorkflowFiles } from './WorkflowFiles'
+import { WorkflowFiles, type WorkflowFileError } from './WorkflowFiles'
+import { documentErrorMessage } from './workflowMessages'
+import { LanguageSelect } from '@/shared/i18n/LanguageSelect'
+import { GuideControls } from '@/features/guide/GuideControls'
 import {
   WorkflowEditorActions,
   type MiniMapControls,
@@ -17,7 +25,8 @@ export function WorkflowToolbar({
 }: {
   persistence: WorkflowPersistence
 } & MiniMapControls) {
-  const [fileError, setFileError] = useState('')
+  const t = useTranslation()
+  const [fileError, setFileError] = useState<WorkflowFileError>()
   const [validation, setValidation] = useState<
     | {
         result: ValidationResult
@@ -31,6 +40,12 @@ export function WorkflowToolbar({
       return { result: validateWorkflow(nodes, edges), revision: graphRevision }
   })
   const documentName = useWorkflowStore((state) => state.documentName)
+  const renameDocument = useWorkflowStore((state) => state.renameDocument)
+  const [draftName, setDraftName] = useState<string>()
+  const displayedName =
+    !documentName.trim() || documentName === DEFAULT_WORKFLOW_NAME
+      ? t('untitled')
+      : documentName.trim()
   const canDeleteSelection = useWorkflowStore(
     ({ nodes, edges }) =>
       nodes.some((node) => node.selected && node.deletable !== false) ||
@@ -55,9 +70,30 @@ export function WorkflowToolbar({
           </span>
           FlowForge
         </div>
-        <h1 className="workflow-title">
-          {documentName.trim() || 'Untitled workflow'}
-        </h1>
+        <h1 className="sr-only">{displayedName}</h1>
+        <input
+          className="workflow-title"
+          aria-label={t('workflowName')}
+          title={t('editName')}
+          maxLength={DOCUMENT_LIMITS.name}
+          value={draftName ?? displayedName}
+          onChange={(event) => setDraftName(event.target.value)}
+          onBlur={() => {
+            if (draftName !== undefined) renameDocument(draftName)
+            setDraftName(undefined)
+          }}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              event.currentTarget.blur()
+            }
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              setDraftName(undefined)
+            }
+          }}
+        />
         <WorkflowSaveStatus persistence={persistence} />
         <div className="toolbar-actions">
           <WorkflowEditorActions
@@ -72,22 +108,26 @@ export function WorkflowToolbar({
             aria-controls={validation ? 'workflow-validation' : undefined}
             onClick={validate}
           >
-            Validate
+            {t('validate')}
           </button>
           <button
             className="toolbar-delete"
             type="button"
             disabled={!canDeleteSelection}
-            title="Delete selected nodes and links (Delete / Backspace)"
+            title={t('removeTip')}
             onClick={removeSelection}
           >
-            Delete selection
+            {t('remove')}
           </button>
+          <GuideControls />
+          <LanguageSelect />
         </div>
       </header>
       {fileError && (
         <p className="toolbar-file-error" role="alert">
-          {fileError}
+          {typeof fileError === 'string'
+            ? t(fileError)
+            : documentErrorMessage(t, fileError)}
         </p>
       )}
       {validation && (

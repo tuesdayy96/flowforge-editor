@@ -1,8 +1,10 @@
+import { useTranslation } from '@/shared/i18n'
 import { Handle, Position, type NodeProps, type NodeTypes } from '@xyflow/react'
 import { workflowPorts } from '../domain/connection'
 import { nodeLabels, type WorkflowNode } from '../model/workflowNode'
 
 function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
+  const t = useTranslation()
   const { input, outputs } = workflowPorts[type]
 
   return (
@@ -12,9 +14,7 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
           type="target"
           id={input}
           position={Position.Left}
-          aria-label={
-            type === 'merge' ? 'Input (multiple connections)' : 'Input'
-          }
+          aria-label={t(type === 'merge' ? 'multiInput' : 'input')}
         />
       )}
       <span className={`workflow-node-type node-symbol--${type}`}>
@@ -31,7 +31,7 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
                 type="source"
                 id={id}
                 position={Position.Right}
-                aria-label={`${id} output`}
+                aria-label={t('branchOutput', { output: id })}
               />
             </div>
           ))}
@@ -43,7 +43,7 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
             type="source"
             id={id}
             position={Position.Right}
-            aria-label="Output"
+            aria-label={t('output')}
           />
         ))
       )}

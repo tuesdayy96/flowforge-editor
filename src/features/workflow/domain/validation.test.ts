@@ -134,7 +134,8 @@ describe('validateWorkflow', () => {
         expect.objectContaining({
           code: 'missing-output',
           nodeId: 'c',
-          message: 'Connect the false branch.',
+          output: 'false',
+          nodeType: 'condition',
         }),
         expect.objectContaining({ code: 'missing-output', nodeId: 'a' }),
       ]),
@@ -156,7 +157,7 @@ describe('validateWorkflow', () => {
         code: 'branch-no-path-to-end',
         nodeId: 'c',
         edgeId: 'cd',
-        message: 'Connect the false branch to a path that reaches an End node.',
+        output: 'false',
       }),
     )
     expect(

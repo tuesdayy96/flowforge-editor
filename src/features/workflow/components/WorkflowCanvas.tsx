@@ -1,4 +1,5 @@
-import { useState, type RefObject } from 'react'
+import { useTranslation } from '@/shared/i18n'
+import { useMemo, useState, type RefObject } from 'react'
 import {
   Background,
   Controls,
@@ -30,9 +31,21 @@ export function WorkflowCanvas({
   surfaceRef: RefObject<HTMLDivElement | null>
   showMiniMap: boolean
 }) {
+  const t = useTranslation()
   useEditorShortcuts(surfaceRef)
   const nodes = useWorkflowStore((state) => state.nodes)
   const edges = useWorkflowStore((state) => state.edges)
+  const visibleEdges = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        ariaLabel: t('flowEdgeLabel', {
+          source: edge.source,
+          target: edge.target,
+        }),
+      })),
+    [edges, t],
+  )
   const addEdge = useWorkflowStore((state) => state.addEdge)
   const applyNodeChanges = useWorkflowStore((state) => state.applyNodeChanges)
   const applyEdgeChanges = useWorkflowStore((state) => state.applyEdgeChanges)
@@ -46,14 +59,14 @@ export function WorkflowCanvas({
   return (
     <main className="canvas" aria-labelledby="canvas-title">
       <div className="canvas-heading">
-        <h2 id="canvas-title">Workflow canvas</h2>
-        <p>Drag to pan. Scroll to zoom. Shift-drag to select multiple nodes.</p>
+        <h2 id="canvas-title">{t('canvas')}</h2>
+        <p>{t('canvasHint')}</p>
       </div>
       <div
         ref={surfaceRef}
         className="canvas-surface"
         tabIndex={0}
-        aria-label="Workflow editing area"
+        aria-label={t('editingArea')}
         onPointerDownCapture={(event) => {
           if (
             !isTextEditor(event.target) &&
@@ -63,8 +76,20 @@ export function WorkflowCanvas({
         }}
       >
         <ReactFlow
+          ariaLabelConfig={{
+            'controls.ariaLabel': t('controls'),
+            'controls.zoomIn.ariaLabel': t('zoomIn'),
+            'controls.zoomOut.ariaLabel': t('zoomOut'),
+            'controls.fitView.ariaLabel': t('fit'),
+            'node.a11yDescription.default': t('flowNodeHelp'),
+            'edge.a11yDescription.default': t('flowEdgeHelp'),
+            'node.a11yDescription.keyboardDisabled': t('flowNode'),
+            'node.a11yDescription.ariaLiveMessage': ({ x, y }) =>
+              t('flowMove', { x, y }),
+            'handle.ariaLabel': t('flowEdge'),
+          }}
           nodes={nodes}
-          edges={edges}
+          edges={visibleEdges}
           defaultViewport={defaultViewport}
           minZoom={MIN_ZOOM}
           maxZoom={MAX_ZOOM}
@@ -96,7 +121,7 @@ export function WorkflowCanvas({
             <MiniMap
               pannable
               zoomable
-              ariaLabel="Workflow minimap"
+              ariaLabel={t('mapLabel')}
               nodeColor={(node) => `var(--${node.type ?? 'muted'})`}
             />
           )}

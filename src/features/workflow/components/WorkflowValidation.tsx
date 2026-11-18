@@ -1,9 +1,12 @@
+import { useTranslation } from '@/shared/i18n'
 import { useReactFlow } from '@xyflow/react'
 import type { ValidationIssue, ValidationResult } from '../domain/validation'
 import { nodeLabels } from '../model/workflowNode'
 import { useWorkflowStore } from '../store/workflowStore'
+import { validationMessage } from './workflowMessages'
 
 function IssueLocation({ nodeId }: { nodeId: string }) {
+  const t = useTranslation()
   const label = useWorkflowStore(({ nodes }) => {
     const node = nodes.find((item) => item.id === nodeId)
     return node && (node.data.label.trim() || nodeLabels[node.type])
@@ -24,21 +27,22 @@ function IssueLocation({ nodeId }: { nodeId: string }) {
   return (
     label && (
       <button type="button" onClick={locateNode}>
-        Locate {label}
+        {t('locate', { label })}
       </button>
     )
   )
 }
 
 function IssueRow({ issue }: { issue: ValidationIssue }) {
+  const t = useTranslation()
   return (
     <li className="validation-issue">
       <span
         className={`validation-severity validation-severity--${issue.severity}`}
       >
-        {issue.severity}
+        {t(issue.severity)}
       </span>
-      <span>{issue.message}</span>
+      <span>{validationMessage(t, issue)}</span>
       {issue.nodeId && <IssueLocation nodeId={issue.nodeId} />}
     </li>
   )
@@ -53,6 +57,7 @@ export function WorkflowValidation({
   revision: number
   onClose: () => void
 }) {
+  const t = useTranslation()
   const current = useWorkflowStore((state) => state.graphRevision === revision)
   const errors = result.issues.filter(
     (issue) => issue.severity === 'error',
@@ -67,26 +72,22 @@ export function WorkflowValidation({
     >
       <div className="validation-heading">
         <div>
-          <h2 id="validation-title">Workflow validation</h2>
+          <h2 id="validation-title">{t('validation')}</h2>
           <div role="status">
             {current ? (
               <>
-                <strong>
-                  {result.valid
-                    ? 'Workflow is valid'
-                    : 'Workflow is incomplete or invalid'}
-                </strong>
+                <strong>{result.valid ? t('valid') : t('invalid')}</strong>
                 <span className="validation-count">
-                  {errors} errors · {warnings} warnings
+                  {t('validationCount', { errors, warnings })}
                 </span>
               </>
             ) : (
-              <span>Workflow changed. Select Validate to check it again.</span>
+              <span>{t('stale')}</span>
             )}
           </div>
         </div>
         <button type="button" className="validation-close" onClick={onClose}>
-          Close results
+          {t('closeResults')}
         </button>
       </div>
       {current && result.issues.length > 0 && (

@@ -15,6 +15,8 @@ Open the local URL printed by Vite. The app runs entirely in the browser.
 
 ## Edit a workflow
 
+The editor opens in Korean by default. Choose 한국어 or English in the toolbar. The Help dialog contains a bilingual guide and a five-step tour. The tour opens on the first visit and can be restarted from Help.
+
 - A new draft starts with one Start node. Add more Start nodes, or add Action, Condition, Merge and End from the palette.
 - Drag nodes by their cards and connect an output to an input. Each output supports one connection. Condition's true and false outputs are independent. Connections that would create a cycle are blocked.
 - Select one node to edit its label and description. Shift-drag a selection box to select multiple nodes.
@@ -40,6 +42,8 @@ Click or tab to the canvas to use editor shortcuts. Text fields keep their stand
 The toolbar also provides Undo, Redo, Copy, Paste and Fit view. Use MiniMap to toggle the overview and drag or zoom there to navigate the canvas. Copy and Paste use the editor clipboard and duplicate links between selected nodes. Undo and Redo keep up to 100 edits in the current document session.
 
 ## Save and share a draft
+
+- Edit the workflow name in the toolbar. Press Enter or leave the field to save it, or press Escape to cancel.
 
 - Edits and the canvas viewport are saved automatically in this browser. The toolbar reports when the local draft was saved or when a write failed. Refreshing restores the last saved draft.
 - **Export JSON** downloads the current draft with its node IDs, positions and connections. **Import JSON** checks the file and asks before replacing the current workflow. A structurally valid draft can be imported even when its graph is incomplete.

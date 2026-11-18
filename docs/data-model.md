@@ -21,6 +21,8 @@ The document excludes selection, dragging, measured dimensions and other React F
 
 History and clipboard data stay in memory. History snapshots use the document's node and edge fields and leave the current viewport and document metadata in place. Pasted nodes and edges receive new IDs, and edge endpoints are remapped to the new node IDs.
 
+Language and tour completion are browser preferences stored under `flowforge:locale` and `flowforge:onboarding:complete`. The JSON document omits both. Node type names and handle IDs are stable across languages, and user-entered labels and descriptions are preserved.
+
 The version check rejects unsupported numeric schema versions before the version 1 schema is applied. Schema validation checks document structure and references. Workflow validation checks whether the graph is ready to run. Incomplete drafts can be stored, exported and imported.
 
 LocalStorage uses `flowforge:workflow:current` for one draft per browser origin. Writes are debounced by 350 ms, with a flush on page hiding. If restoration fails, the app leaves the stored value in place until the user confirms a replacement.

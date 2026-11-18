@@ -14,7 +14,11 @@ export const SAVE_DELAY = 350
 type DraftStorage = Pick<Storage, 'getItem' | 'setItem'>
 type SaveStatus =
   | { kind: 'unsaved' | 'pending' | 'saving' | 'saved' }
-  | { kind: 'save-failed' | 'restore-failed'; message: string }
+  | {
+      kind: 'save-failed' | 'restore-failed'
+      detail:
+        WorkflowDocumentError | 'storageFull' | 'storageWrite' | 'storageRead'
+    }
 
 function documentChanged(next: DocumentState, previous: DocumentState) {
   if (
@@ -54,12 +58,12 @@ function documentChanged(next: DocumentState, previous: DocumentState) {
   )
 }
 
-function saveErrorMessage(error: unknown) {
-  if (error instanceof WorkflowDocumentError) return error.message
+function saveErrorDetail(error: unknown) {
+  if (error instanceof WorkflowDocumentError) return error
   if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-    return 'Browser storage is full. Export your work or free up storage and retry.'
+    return 'storageFull'
   }
-  return 'Browser storage could not be written. Export your work or retry.'
+  return 'storageWrite'
 }
 
 export function connectWorkflowPersistence(storage: () => DraftStorage) {
@@ -82,10 +86,7 @@ export function connectWorkflowPersistence(storage: () => DraftStorage) {
     status.setState(
       {
         kind: 'restore-failed',
-        message:
-          error instanceof WorkflowDocumentError
-            ? `Could not restore the local draft. ${error.message} The original data is protected.`
-            : 'Could not read browser storage. Automatic writes are paused.',
+        detail: error instanceof WorkflowDocumentError ? error : 'storageRead',
       },
       true,
     )
@@ -106,7 +107,7 @@ export function connectWorkflowPersistence(storage: () => DraftStorage) {
       status.setState({ kind: 'saved' }, true)
     } catch (error) {
       status.setState(
-        { kind: 'save-failed', message: saveErrorMessage(error) },
+        { kind: 'save-failed', detail: saveErrorDetail(error) },
         true,
       )
     }

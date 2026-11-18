@@ -7,6 +7,7 @@ import {
 } from './workflowNode'
 
 export const SCHEMA_VERSION = 1
+export const DEFAULT_WORKFLOW_NAME = 'Untitled workflow'
 export const DOCUMENT_LIMITS = {
   bytes: 1024 * 1024,
   nodes: 500,
@@ -105,9 +106,13 @@ export type DocumentErrorCode =
 export class WorkflowDocumentError extends Error {
   constructor(
     public readonly code: DocumentErrorCode,
-    message: string,
+    public readonly params: {
+      field?: string
+      edge?: string
+      encoding?: string
+    } = {},
   ) {
-    super(message)
+    super(code)
     this.name = 'WorkflowDocumentError'
   }
 }
@@ -117,10 +122,7 @@ function assertTextSize(text: string) {
     text.length > DOCUMENT_LIMITS.bytes ||
     new TextEncoder().encode(text).length > DOCUMENT_LIMITS.bytes
   ) {
-    throw new WorkflowDocumentError(
-      'too-large',
-      'The workflow JSON exceeds 1 MiB.',
-    )
+    throw new WorkflowDocumentError('too-large')
   }
 }
 
@@ -134,10 +136,7 @@ function parseVersion(document: unknown) {
 
   const version = document.schemaVersion
   if (typeof version === 'number' && version !== SCHEMA_VERSION) {
-    throw new WorkflowDocumentError(
-      'unsupported-version',
-      'This workflow uses an unsupported schema version. FlowForge supports version 1.',
-    )
+    throw new WorkflowDocumentError('unsupported-version')
   }
 }
 
@@ -147,10 +146,7 @@ export function validateDocument(input: unknown): WorkflowDocument {
     for (const field of ['nodes', 'edges'] as const) {
       const entries = Reflect.get(input, field)
       if (Array.isArray(entries) && entries.length > DOCUMENT_LIMITS[field]) {
-        throw new WorkflowDocumentError(
-          'too-large',
-          `The workflow has too many ${field} (limit ${DOCUMENT_LIMITS[field]}).`,
-        )
+        throw new WorkflowDocumentError('too-large', { field })
       }
     }
   }
@@ -171,9 +167,7 @@ export function validateDocument(input: unknown): WorkflowDocument {
     const location = issue.path.join('.') || 'document'
     throw new WorkflowDocumentError(
       missing ? 'missing-field' : 'invalid-field',
-      missing
-        ? `Required field missing: ${location}.`
-        : `Invalid field ${location}: ${issue.message}`,
+      { field: location },
     )
   }
 
@@ -181,19 +175,13 @@ export function validateDocument(input: unknown): WorkflowDocument {
   const nodesById = new Map(nodes.map((node) => [node.id, node]))
   const edgeIds = new Set(edges.map((edge) => edge.id))
   if (nodesById.size !== nodes.length || edgeIds.size !== edges.length) {
-    throw new WorkflowDocumentError(
-      'duplicate-id',
-      'Node IDs must be unique, and connection IDs must be unique.',
-    )
+    throw new WorkflowDocumentError('duplicate-id')
   }
   for (const edge of edges) {
     const source = nodesById.get(edge.source)
     const target = nodesById.get(edge.target)
     if (!source || !target) {
-      throw new WorkflowDocumentError(
-        'missing-reference',
-        `Connection “${edge.id}” references a missing node.`,
-      )
+      throw new WorkflowDocumentError('missing-reference', { edge: edge.id })
     }
     if (
       !workflowPorts[source.type].outputs.some(
@@ -201,10 +189,7 @@ export function validateDocument(input: unknown): WorkflowDocument {
       ) ||
       workflowPorts[target.type].input !== edge.targetHandle
     ) {
-      throw new WorkflowDocumentError(
-        'invalid-field',
-        `Connection “${edge.id}” references a handle that does not exist on its node.`,
-      )
+      throw new WorkflowDocumentError('invalid-field', { edge: edge.id })
     }
   }
   return result.data
@@ -216,10 +201,7 @@ export function deserializeDocument(text: string): WorkflowDocument {
   try {
     value = JSON.parse(text)
   } catch {
-    throw new WorkflowDocumentError(
-      'json-syntax',
-      'The file is not valid JSON.',
-    )
+    throw new WorkflowDocumentError('json-syntax')
   }
   const document = validateDocument(value)
   assertTextSize(JSON.stringify(document, null, 2))

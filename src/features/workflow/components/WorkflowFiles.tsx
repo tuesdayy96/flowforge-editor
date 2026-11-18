@@ -1,13 +1,18 @@
+import { useTranslation } from '@/shared/i18n'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { WorkflowDocumentError } from '../model/workflowDocument'
 import { downloadWorkflow, readWorkflowFile } from '../services/workflowFiles'
 import { useWorkflowStore } from '../store/workflowStore'
 
+export type WorkflowFileError =
+  WorkflowDocumentError | 'readFailed' | 'downloadFailed'
+
 export function WorkflowFiles({
   onError,
 }: {
-  onError: (message: string) => void
+  onError: (error?: WorkflowFileError) => void
 }) {
+  const t = useTranslation()
   const input = useRef<HTMLInputElement>(null)
   const [reading, setReading] = useState(false)
 
@@ -16,38 +21,26 @@ export function WorkflowFiles({
     event.currentTarget.value = ''
     if (!file) return
 
-    onError('')
+    onError()
     setReading(true)
     try {
       const document = await readWorkflowFile(file)
-      if (
-        window.confirm(
-          'Replace the current workflow with this JSON document? Export the current workflow first if you want to keep a copy.',
-        )
-      ) {
+      if (window.confirm(t('confirmImport'))) {
         useWorkflowStore.getState().replaceDocument(document, 'import')
       }
     } catch (error) {
-      onError(
-        error instanceof WorkflowDocumentError
-          ? error.message
-          : 'The JSON file could not be read.',
-      )
+      onError(error instanceof WorkflowDocumentError ? error : 'readFailed')
     } finally {
       setReading(false)
     }
   }
 
   function exportFile() {
-    onError('')
+    onError()
     try {
       downloadWorkflow(useWorkflowStore.getState())
     } catch (error) {
-      onError(
-        error instanceof WorkflowDocumentError
-          ? error.message
-          : 'The workflow could not be downloaded.',
-      )
+      onError(error instanceof WorkflowDocumentError ? error : 'downloadFailed')
     }
   }
 
@@ -66,10 +59,10 @@ export function WorkflowFiles({
         disabled={reading}
         onClick={() => input.current?.click()}
       >
-        {reading ? 'Reading JSON…' : 'Import JSON'}
+        {t(reading ? 'reading' : 'importJson')}
       </button>
       <button type="button" className="toolbar-file" onClick={exportFile}>
-        Export JSON
+        {t('exportJson')}
       </button>
     </>
   )

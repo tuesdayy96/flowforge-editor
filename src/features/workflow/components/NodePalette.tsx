@@ -1,3 +1,4 @@
+import { useTranslation, type MessageKey } from '@/shared/i18n'
 import type { RefObject } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import type { WorkflowNodeType } from '../domain/connection'
@@ -5,15 +6,15 @@ import { nodeLabels } from '../model/workflowNode'
 import { useWorkflowStore } from '../store/workflowStore'
 
 const paletteItems = [
-  { type: 'start', symbol: '▷', description: 'Entry point' },
-  { type: 'action', symbol: '↗', description: 'Perform a task' },
-  { type: 'condition', symbol: '◇', description: 'Branch by a rule' },
-  { type: 'merge', symbol: '⇥', description: 'Bring paths together' },
-  { type: 'end', symbol: '□', description: 'Exit point' },
+  { type: 'start', symbol: '▷', description: 'startHint' },
+  { type: 'action', symbol: '↗', description: 'actionHint' },
+  { type: 'condition', symbol: '◇', description: 'conditionHint' },
+  { type: 'merge', symbol: '⇥', description: 'mergeHint' },
+  { type: 'end', symbol: '□', description: 'endHint' },
 ] satisfies Array<{
   type: WorkflowNodeType
   symbol: string
-  description: string
+  description: MessageKey
 }>
 
 export function NodePalette({
@@ -21,6 +22,7 @@ export function NodePalette({
 }: {
   surfaceRef: RefObject<HTMLDivElement | null>
 }) {
+  const t = useTranslation()
   const { screenToFlowPosition } = useReactFlow()
   const addNode = useWorkflowStore((state) => state.addNode)
 
@@ -40,8 +42,8 @@ export function NodePalette({
   return (
     <aside className="panel palette" aria-labelledby="palette-title">
       <div className="panel-heading">
-        <h2 id="palette-title">Node palette</h2>
-        <p>Add a node at the center of the canvas.</p>
+        <h2 id="palette-title">{t('palette')}</h2>
+        <p>{t('paletteHint')}</p>
       </div>
       <ul className="node-list">
         {paletteItems.map(({ type, symbol, description }) => (
@@ -49,7 +51,7 @@ export function NodePalette({
             <button
               className="node-card flex w-full items-center gap-3 text-left"
               type="button"
-              aria-label={`Add ${nodeLabels[type]} node`}
+              aria-label={t('addNode', { type: nodeLabels[type] })}
               onClick={() => addAtCenter(type)}
             >
               <span
@@ -60,7 +62,7 @@ export function NodePalette({
               </span>
               <span>
                 <span className="block font-semibold">{nodeLabels[type]}</span>
-                <span className="node-card-description">{description}</span>
+                <span className="node-card-description">{t(description)}</span>
               </span>
             </button>
           </li>

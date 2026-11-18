@@ -36,6 +36,12 @@ The store records bounded snapshots of the persisted node and edge fields. A sna
 
 The editor clipboard projects selected nodes and edges with both endpoints selected. Paste allocates fresh node and edge IDs, remaps endpoints, revalidates connections, and applies temporary selection and an increasing offset. The full paste is one edit. The canvas registers its own shortcut listener and removes it on unmount. Toolbar and shortcuts use the same store actions, and React Flow provides the MiniMap and multi-selection.
 
+## Localization and help
+
+The presentation layer uses typed Korean and English dictionaries in `src/shared/i18n/`. Locale and onboarding preferences have their own Zustand store and storage keys. Switching languages updates the page language and translated labels without replacing the editor. The guide and first-run tour render in a native modal dialog and return focus to Help when closed.
+
+Graph validation emits stable codes and parameters. The validation panel translates them on render, so an existing result can be read in either language. Document and storage errors also retain codes or structured details for presentation.
+
 ## Tooling references
 
 - [Vite runtime requirements](https://vite.dev/guide/)

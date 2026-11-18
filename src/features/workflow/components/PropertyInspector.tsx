@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n'
 import { useId } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { DOCUMENT_LIMITS } from '../model/workflowDocument'
@@ -7,6 +8,7 @@ import { selectSelectedNodeIds, useWorkflowStore } from '../store/workflowStore'
 type EditableNode = Pick<WorkflowNode, 'id' | 'type' | 'data'>
 
 function NodeProperties({ node }: { node: EditableNode }) {
+  const t = useTranslation()
   const id = useId()
   const updateNode = useWorkflowStore((state) => state.updateNode)
   const beginEdit = useWorkflowStore((state) => state.beginEdit)
@@ -15,12 +17,12 @@ function NodeProperties({ node }: { node: EditableNode }) {
   return (
     <div className="inspector-fields">
       <dl>
-        <dt>Node type</dt>
+        <dt>{t('nodeType')}</dt>
         <dd>{nodeLabels[node.type]}</dd>
-        <dt>Node ID</dt>
+        <dt>{t('nodeId')}</dt>
         <dd className="inspector-node-id">{node.id}</dd>
       </dl>
-      <label htmlFor={`${id}-label`}>Label</label>
+      <label htmlFor={`${id}-label`}>{t('label')}</label>
       <input
         id={`${id}-label`}
         maxLength={DOCUMENT_LIMITS.label}
@@ -29,7 +31,7 @@ function NodeProperties({ node }: { node: EditableNode }) {
         onBlur={() => finishEdit('property')}
         onChange={(event) => updateNode(node.id, { label: event.target.value })}
       />
-      <label htmlFor={`${id}-description`}>Description</label>
+      <label htmlFor={`${id}-description`}>{t('description')}</label>
       <textarea
         id={`${id}-description`}
         maxLength={DOCUMENT_LIMITS.description}
@@ -46,6 +48,7 @@ function NodeProperties({ node }: { node: EditableNode }) {
 }
 
 export function PropertyInspector() {
+  const t = useTranslation()
   const selectedNodeIds = useWorkflowStore(useShallow(selectSelectedNodeIds))
   const node = useWorkflowStore(
     useShallow(({ nodes }) => {
@@ -59,7 +62,7 @@ export function PropertyInspector() {
   return (
     <aside className="panel inspector" aria-labelledby="inspector-title">
       <div className="panel-heading">
-        <h2 id="inspector-title">Properties</h2>
+        <h2 id="inspector-title">{t('properties')}</h2>
       </div>
       {node ? (
         <NodeProperties key={node.id} node={node} />
@@ -67,10 +70,10 @@ export function PropertyInspector() {
         <div className="inspector-empty">
           <h3>
             {selectedNodeIds.length > 1
-              ? `${selectedNodeIds.length} nodes selected`
-              : 'No node selected'}
+              ? t('selected', { count: selectedNodeIds.length })
+              : t('noSelection')}
           </h3>
-          <p>Select one node to edit its properties.</p>
+          <p>{t('selectionHint')}</p>
         </div>
       )}
     </aside>

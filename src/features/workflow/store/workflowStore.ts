@@ -7,6 +7,7 @@ import {
 } from '../domain/connection'
 import {
   DEFAULT_VIEWPORT,
+  DEFAULT_WORKFLOW_NAME,
   DOCUMENT_LIMITS,
   type WorkflowDocument,
 } from '../model/workflowDocument'
@@ -38,6 +39,7 @@ interface EditTransaction {
 interface WorkflowState {
   documentId: string
   documentName: string
+  renameDocument: (name: string) => void
   viewport: WorkflowDocument['viewport']
   documentGeneration: number
   imported: boolean
@@ -164,7 +166,15 @@ function removeIncidentEdges(
 
 export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
   documentId: crypto.randomUUID(),
-  documentName: 'Untitled workflow',
+  documentName: DEFAULT_WORKFLOW_NAME,
+  renameDocument: (name) =>
+    set((state) => {
+      const documentName = name.trim() || DEFAULT_WORKFLOW_NAME
+      return documentName === state.documentName ||
+        documentName.length > DOCUMENT_LIMITS.name
+        ? state
+        : { documentName }
+    }),
   viewport: DEFAULT_VIEWPORT,
   documentGeneration: 0,
   imported: false,

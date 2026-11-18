@@ -9,20 +9,14 @@ import {
 
 export async function readWorkflowFile(file: File) {
   if (file.size > DOCUMENT_LIMITS.bytes) {
-    throw new WorkflowDocumentError(
-      'too-large',
-      'The workflow JSON exceeds 1 MiB.',
-    )
+    throw new WorkflowDocumentError('too-large')
   }
   const bytes = await file.arrayBuffer()
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
   } catch {
-    throw new WorkflowDocumentError(
-      'json-syntax',
-      'The file must contain UTF-8 JSON.',
-    )
+    throw new WorkflowDocumentError('json-syntax', { encoding: 'UTF-8' })
   }
   return deserializeDocument(text)
 }
