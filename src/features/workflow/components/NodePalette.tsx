@@ -1,11 +1,11 @@
 import type { RefObject } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import type { WorkflowNodeType } from '../domain/connection'
-import { nodeLabels, type AddableNodeType } from '../model/workflowNode'
+import { nodeLabels } from '../model/workflowNode'
 import { useWorkflowStore } from '../store/workflowStore'
 
 const paletteItems = [
-  { type: 'start', symbol: '▷', description: 'Already on the canvas' },
+  { type: 'start', symbol: '▷', description: 'Entry point' },
   { type: 'action', symbol: '↗', description: 'Perform a task' },
   { type: 'condition', symbol: '◇', description: 'Branch by a rule' },
   { type: 'end', symbol: '□', description: 'Exit point' },
@@ -22,8 +22,11 @@ export function NodePalette({
 }) {
   const { screenToFlowPosition } = useReactFlow()
   const addNode = useWorkflowStore((state) => state.addNode)
+  const hasStart = useWorkflowStore((state) =>
+    state.nodes.some((node) => node.type === 'start'),
+  )
 
-  function addAtCenter(type: AddableNodeType) {
+  function addAtCenter(type: WorkflowNodeType) {
     const bounds = surfaceRef.current?.getBoundingClientRect()
     if (!bounds) return
 
@@ -44,6 +47,7 @@ export function NodePalette({
       </div>
       <ul className="node-list">
         {paletteItems.map(({ type, symbol, description }) => {
+          const existingStart = type === 'start' && hasStart
           const content = (
             <>
               <span
@@ -54,7 +58,9 @@ export function NodePalette({
               </span>
               <span>
                 <span className="block font-semibold">{nodeLabels[type]}</span>
-                <span className="node-card-description">{description}</span>
+                <span className="node-card-description">
+                  {existingStart ? 'Already on the canvas' : description}
+                </span>
               </span>
             </>
           )
@@ -62,7 +68,7 @@ export function NodePalette({
 
           return (
             <li key={type}>
-              {type === 'start' ? (
+              {existingStart ? (
                 <div className={className}>{content}</div>
               ) : (
                 <button

@@ -23,7 +23,13 @@ Open the local URL printed by Vite. The app runs entirely in the browser.
 
 - Select **Validate** to check whether the workflow is ready to run. Use **Locate** beside an issue to select its node and center the canvas on it. After adding or removing nodes or connections, run Validate again.
 
-You can keep editing an incomplete workflow. Edits live in memory for the current session.
+## Save and share a draft
+
+- Edits and the canvas viewport are saved automatically in this browser. The toolbar reports when the local draft was saved or when a write failed. Refreshing restores the last saved draft.
+- **Export JSON** downloads the current draft with its node IDs, positions and connections. **Import JSON** checks the file and asks before replacing the current workflow. A structurally valid draft can be imported even when its graph is incomplete.
+- If the browser cannot restore its draft, the editor preserves the stored value and pauses autosave. **Replace local draft** overwrites it after confirmation. A failed write can be retried, and the current document can be exported.
+
+See [Document format](docs/data-model.md) for the version and limits.
 
 ## Verification
 

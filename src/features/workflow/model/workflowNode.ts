@@ -13,7 +13,6 @@ export type WorkflowNode = Node<WorkflowNodeData, WorkflowNodeType> & {
   type: WorkflowNodeType
 }
 export type WorkflowEdge = Edge
-export type AddableNodeType = Exclude<WorkflowNodeType, 'start'>
 
 export function createWorkflowNode(
   type: WorkflowNodeType,

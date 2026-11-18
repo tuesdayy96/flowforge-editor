@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { useShallow } from 'zustand/react/shallow'
+import { DOCUMENT_LIMITS } from '../model/workflowDocument'
 import { nodeLabels, type WorkflowNode } from '../model/workflowNode'
 import { selectSelectedNodeIds, useWorkflowStore } from '../store/workflowStore'
 
@@ -18,12 +19,14 @@ function NodeProperties({ node }: { node: WorkflowNode }) {
       <label htmlFor={`${id}-label`}>Label</label>
       <input
         id={`${id}-label`}
+        maxLength={DOCUMENT_LIMITS.label}
         value={node.data.label}
         onChange={(event) => updateNode(node.id, { label: event.target.value })}
       />
       <label htmlFor={`${id}-description`}>Description</label>
       <textarea
         id={`${id}-description`}
+        maxLength={DOCUMENT_LIMITS.description}
         rows={4}
         value={node.data.description}
         onChange={(event) =>

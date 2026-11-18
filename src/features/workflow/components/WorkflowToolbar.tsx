@@ -1,13 +1,30 @@
 import { useState } from 'react'
 import { validateWorkflow, type ValidationResult } from '../domain/validation'
 import { useWorkflowStore } from '../store/workflowStore'
+import type { WorkflowPersistence } from '../services/workflowPersistence'
+import { WorkflowFiles } from './WorkflowFiles'
+import { WorkflowSaveStatus } from './WorkflowSaveStatus'
 import { WorkflowValidation } from './WorkflowValidation'
 
-export function WorkflowToolbar() {
-  const [validation, setValidation] = useState<{
-    result: ValidationResult
-    revision: number
-  }>()
+export function WorkflowToolbar({
+  persistence,
+}: {
+  persistence: WorkflowPersistence
+}) {
+  const [fileError, setFileError] = useState('')
+  const [validation, setValidation] = useState<
+    | {
+        result: ValidationResult
+        revision: number
+      }
+    | undefined
+  >(() => {
+    const { imported, nodes, edges, graphRevision } =
+      useWorkflowStore.getState()
+    if (imported)
+      return { result: validateWorkflow(nodes, edges), revision: graphRevision }
+  })
+  const documentName = useWorkflowStore((state) => state.documentName)
   const canDeleteSelection = useWorkflowStore(
     ({ nodes, edges }) =>
       nodes.some((node) => node.selected && node.deletable !== false) ||
@@ -32,8 +49,12 @@ export function WorkflowToolbar() {
           </span>
           FlowForge
         </div>
-        <h1 className="workflow-title">Untitled workflow</h1>
+        <h1 className="workflow-title">
+          {documentName.trim() || 'Untitled workflow'}
+        </h1>
+        <WorkflowSaveStatus persistence={persistence} />
         <div className="toolbar-actions">
+          <WorkflowFiles onError={setFileError} />
           <button
             className="toolbar-validate"
             type="button"
@@ -53,6 +74,11 @@ export function WorkflowToolbar() {
           </button>
         </div>
       </header>
+      {fileError && (
+        <p className="toolbar-file-error" role="alert">
+          {fileError}
+        </p>
+      )}
       {validation && (
         <WorkflowValidation
           {...validation}

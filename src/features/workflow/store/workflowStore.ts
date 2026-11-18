@@ -1,19 +1,36 @@
 import { EdgeChangeset, NodeChangeset, type XYPosition } from '@xyflow/react'
 import { create } from 'zustand'
-import { canConnect, type WorkflowConnection } from '../domain/connection'
+import {
+  canConnect,
+  type WorkflowConnection,
+  type WorkflowNodeType,
+} from '../domain/connection'
+import {
+  DEFAULT_VIEWPORT,
+  type WorkflowDocument,
+} from '../model/workflowDocument'
 import {
   createWorkflowNode,
-  type AddableNodeType,
   type WorkflowEdge,
   type WorkflowNode,
   type WorkflowNodeData,
 } from '../model/workflowNode'
 
 interface WorkflowState {
+  documentId: string
+  documentName: string
+  viewport: WorkflowDocument['viewport']
+  documentGeneration: number
+  imported: boolean
   nodes: WorkflowNode[]
   edges: WorkflowEdge[]
   graphRevision: number
-  addNode: (type: AddableNodeType, position: XYPosition) => void
+  replaceDocument: (
+    document: WorkflowDocument,
+    source: 'restore' | 'import',
+  ) => void
+  updateViewport: (viewport: WorkflowDocument['viewport']) => void
+  addNode: (type: WorkflowNodeType, position: XYPosition) => void
   updateNode: (id: string, changes: Partial<WorkflowNodeData>) => void
   addEdge: (connection: WorkflowConnection) => void
   removeSelection: () => void
@@ -40,14 +57,51 @@ function removeIncidentEdges(
 }
 
 export const useWorkflowStore = create<WorkflowState>()((set) => ({
+  documentId: crypto.randomUUID(),
+  documentName: 'Untitled workflow',
+  viewport: DEFAULT_VIEWPORT,
+  documentGeneration: 0,
+  imported: false,
   nodes: [createWorkflowNode('start', { x: 140, y: 132 })],
   edges: [],
   graphRevision: 0,
+  replaceDocument: (document, source) =>
+    set((state) => {
+      const firstStart = document.nodes.find((node) => node.type === 'start')
+      return {
+        documentId: document.id,
+        documentName: document.name,
+        viewport: { ...document.viewport },
+        nodes: document.nodes.map((node) => ({
+          ...node,
+          position: { ...node.position },
+          data: { ...node.data },
+          deletable: node !== firstStart,
+        })),
+        edges: document.edges.map((edge) => ({ ...edge })),
+        graphRevision: state.graphRevision + 1,
+        documentGeneration: state.documentGeneration + 1,
+        imported: source === 'import',
+      }
+    }),
+  updateViewport: (viewport) =>
+    set((state) => {
+      const previous = state.viewport
+      return previous.x === viewport.x &&
+        previous.y === viewport.y &&
+        previous.zoom === viewport.zoom
+        ? state
+        : { viewport: { ...viewport } }
+    }),
   addNode: (type, position) =>
-    set(({ nodes, graphRevision }) => ({
-      nodes: [...nodes, createWorkflowNode(type, position)],
-      graphRevision: graphRevision + 1,
-    })),
+    set((state) => {
+      if (type === 'start' && state.nodes.some((node) => node.type === 'start'))
+        return state
+      return {
+        nodes: [...state.nodes, createWorkflowNode(type, position)],
+        graphRevision: state.graphRevision + 1,
+      }
+    }),
   updateNode: (id, changes) =>
     set((state) => {
       const { nodes } = state

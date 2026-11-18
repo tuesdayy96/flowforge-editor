@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { useState, type RefObject } from 'react'
 import {
   Background,
   Controls,
@@ -7,6 +7,7 @@ import {
   type NodeOrigin,
 } from '@xyflow/react'
 import { canConnect } from '../domain/connection'
+import { MAX_ZOOM, MIN_ZOOM } from '../model/workflowDocument'
 import { workflowNodeTypes } from '../nodes/WorkflowNodes'
 import { useWorkflowStore } from '../store/workflowStore'
 
@@ -29,6 +30,12 @@ export function WorkflowCanvas({
   const addEdge = useWorkflowStore((state) => state.addEdge)
   const applyNodeChanges = useWorkflowStore((state) => state.applyNodeChanges)
   const applyEdgeChanges = useWorkflowStore((state) => state.applyEdgeChanges)
+  const updateViewport = useWorkflowStore((state) => state.updateViewport)
+  const [{ viewport: defaultViewport, documentGeneration: generation }] =
+    useState(() => {
+      const { viewport, documentGeneration } = useWorkflowStore.getState()
+      return { viewport, documentGeneration }
+    })
 
   return (
     <main className="canvas" aria-labelledby="canvas-title">
@@ -40,6 +47,13 @@ export function WorkflowCanvas({
         <ReactFlow
           nodes={nodes}
           edges={edges}
+          defaultViewport={defaultViewport}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
+          onMove={(_event, viewport) => {
+            if (useWorkflowStore.getState().documentGeneration === generation)
+              updateViewport(viewport)
+          }}
           nodeTypes={workflowNodeTypes}
           nodeOrigin={nodeOrigin}
           onNodesChange={applyNodeChanges}

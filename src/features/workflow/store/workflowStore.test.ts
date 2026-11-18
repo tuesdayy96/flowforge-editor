@@ -1,6 +1,7 @@
 import { EdgeChangeset, NodeChangeset } from '@xyflow/react'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { WorkflowEdge, WorkflowNode } from '../model/workflowNode'
+import { projectDocument, validateDocument } from '../model/workflowDocument'
 import {
   selectSelectedEdgeIds,
   selectSelectedNodeIds,
@@ -25,6 +26,27 @@ function addLinkedAction() {
 beforeEach(() => setState(getInitialState(), true))
 
 describe('workflow store graph revision', () => {
+  it('lets imported drafts repair the Start count while protecting the remaining Start', () => {
+    const empty = { ...projectDocument(getState()), nodes: [] }
+    getState().replaceDocument(validateDocument(empty), 'import')
+    getState().addNode('start', position)
+    getState().addNode('start', position)
+    expect(getState().nodes).toHaveLength(1)
+
+    const draft = projectDocument(getState())
+    getState().replaceDocument(
+      validateDocument({
+        ...draft,
+        nodes: [...draft.nodes, { ...draft.nodes[0], id: 'extra-start' }],
+      }),
+      'import',
+    )
+    getState().selectNode('extra-start')
+    getState().removeSelection()
+    expect(getState().nodes).toHaveLength(1)
+    expect(getState().nodes[0].deletable).toBe(false)
+  })
+
   it('keeps validation current through changes to layout, label and selection', () => {
     const { action, edge } = addLinkedAction()
     const revision = getState().graphRevision
