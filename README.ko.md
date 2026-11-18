@@ -8,6 +8,8 @@ FlowForge는 브라우저에서 워크플로를 그리는 편집기입니다. �
 
 ## 미리보기
 
+[라이브 데모](https://flowforge-editor.vercel.app/)
+
 ![노드 팔레트, 캔버스, 속성 패널이 표시된 편집기](docs/assets/editor.png)
 
 | 여러 Start와 Merge                                                            | 검증 결과                                                       | 사용자 가이드                                                 |

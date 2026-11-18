@@ -8,6 +8,8 @@ FlowForge is a browser-based visual workflow editor. Arrange nodes, validate the
 
 ## Preview
 
+[Live demo](https://flowforge-editor.vercel.app/)
+
 ![Editor with the node palette, canvas, and properties panel](docs/assets/editor.png)
 
 | Multi-Start and Merge                                             | Validation results                                                 | User guide                                              |
