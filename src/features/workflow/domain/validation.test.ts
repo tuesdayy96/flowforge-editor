@@ -32,11 +32,6 @@ describe('validateWorkflow', () => {
 
   it.each([
     ['missing Start', nodes.slice(1), 'start-count'],
-    [
-      'multiple Start nodes',
-      [...nodes, { id: 'another-start', type: 'start' as const }],
-      'start-count',
-    ],
     ['missing End', nodes.slice(0, -1), 'end-missing'],
     ['duplicate node ID', [...nodes, nodes[1]], 'duplicate-node-id'],
   ] as const)('reports %s', (_name, candidateNodes, code) => {
@@ -44,6 +39,50 @@ describe('validateWorkflow', () => {
     expect(result.valid).toBe(false)
     expect(result.issues).toContainEqual(
       expect.objectContaining({ code, severity: 'error' }),
+    )
+  })
+
+  it('uses all Starts to reach their distinct paths and a shared Merge', () => {
+    const candidateNodes: ConnectionNode[] = [
+      ...nodes,
+      { id: 's2', type: 'start' },
+      { id: 'a2', type: 'action' },
+      { id: 'm', type: 'merge' },
+    ]
+    const links = [
+      ...edges.slice(0, 2),
+      link('cm-true', 'c', 'm', 'true'),
+      link('cm-false', 'c', 'm', 'false'),
+      link('s2-a2', 's2', 'a2'),
+      link('a2-m', 'a2', 'm'),
+      link('me', 'm', 'e'),
+    ]
+    expect(validateWorkflow(candidateNodes, links)).toEqual({
+      valid: true,
+      issues: [],
+    })
+
+    const withOrphan = validateWorkflow(
+      [...candidateNodes, { id: 'orphan', type: 'action' }],
+      [...links, link('orphan-e', 'orphan', 'e')],
+    )
+    expect(withOrphan.issues).toEqual([
+      expect.objectContaining({ code: 'unreachable-node', nodeId: 'orphan' }),
+    ])
+
+    const withoutMergeOutput = validateWorkflow(
+      candidateNodes,
+      links.slice(0, -1),
+    )
+    expect(withoutMergeOutput.issues).toContainEqual(
+      expect.objectContaining({ code: 'missing-output', nodeId: 'm' }),
+    )
+    const withoutSecondStartOutput = validateWorkflow(
+      candidateNodes,
+      links.filter(({ id }) => id !== 's2-a2'),
+    )
+    expect(withoutSecondStartOutput.issues).toContainEqual(
+      expect.objectContaining({ code: 'missing-output', nodeId: 's2' }),
     )
   })
 
@@ -112,6 +151,14 @@ describe('validateWorkflow', () => {
       link('cd', 'c', 'dead', 'false'),
     ])
     expect(result.valid).toBe(false)
+    expect(result.issues).toContainEqual(
+      expect.objectContaining({
+        code: 'branch-no-path-to-end',
+        nodeId: 'c',
+        edgeId: 'cd',
+        message: 'Connect the false branch to a path that reaches an End node.',
+      }),
+    )
     expect(
       result.issues
         .filter((issue) => issue.code === 'no-path-to-end')

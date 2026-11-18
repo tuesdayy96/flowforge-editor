@@ -4,6 +4,7 @@ export const workflowPorts = {
   start: { input: null, outputs: ['out'] },
   action: { input: 'in', outputs: ['out'] },
   condition: { input: 'in', outputs: ['true', 'false'] },
+  merge: { input: 'in', outputs: ['out'] },
   end: { input: 'in', outputs: [] },
 } satisfies Record<string, { input: string | null; outputs: readonly string[] }>
 

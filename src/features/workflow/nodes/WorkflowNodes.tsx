@@ -12,7 +12,9 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
           type="target"
           id={input}
           position={Position.Left}
-          aria-label="Input"
+          aria-label={
+            type === 'merge' ? 'Input (multiple connections)' : 'Input'
+          }
         />
       )}
       <span className={`workflow-node-type node-symbol--${type}`}>
@@ -65,9 +67,14 @@ function EndNode(props: NodeProps<WorkflowNode>) {
   return <NodeCard {...props} />
 }
 
+function MergeNode(props: NodeProps<WorkflowNode>) {
+  return <NodeCard {...props} />
+}
+
 export const workflowNodeTypes = {
   start: StartNode,
   action: ActionNode,
   condition: ConditionNode,
+  merge: MergeNode,
   end: EndNode,
 } satisfies NodeTypes

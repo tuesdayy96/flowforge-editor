@@ -68,6 +68,40 @@ describe('workflow document', () => {
     expect(validateDocument(document)).toEqual(document)
   })
 
+  it('round-trips multiple Starts and a Merge using the existing version 1 format', () => {
+    const merged: WorkflowDocument = {
+      ...document,
+      nodes: [
+        ...document.nodes,
+        { ...document.nodes[0], id: 'other-start' },
+        { ...document.nodes[1], id: 'merge', type: 'merge' },
+      ],
+      edges: [
+        document.edges[0],
+        ...document.edges
+          .slice(1)
+          .map((edge) => ({ ...edge, target: 'merge' })),
+        {
+          id: 'other-merge',
+          source: 'other-start',
+          sourceHandle: 'out',
+          target: 'merge',
+          targetHandle: 'in',
+        },
+        {
+          id: 'merge-end',
+          source: 'merge',
+          sourceHandle: 'out',
+          target: 'end',
+          targetHandle: 'in',
+        },
+      ],
+    }
+    const restored = deserializeDocument(serializeDocument(merged))
+    expect(restored).toEqual(merged)
+    expect(validateWorkflow(restored.nodes, restored.edges).valid).toBe(true)
+  })
+
   it('projects only document fields from the live editor', () => {
     const position = { ...document.nodes[0].position }
     const snapshot = projectDocument({

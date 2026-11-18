@@ -15,13 +15,14 @@ Open the local URL printed by Vite. The app runs entirely in the browser.
 
 ## Edit a workflow
 
-- Each session starts with one Start node. Add Action, Condition or End from the palette to place it at the center of the current view.
+- A new draft starts with one Start node. Add more Start nodes, or add Action, Condition, Merge and End from the palette.
 - Drag nodes by their cards and connect an output to an input. Each output supports one connection. Condition's true and false outputs are independent. Connections that would create a cycle are blocked.
 - Select one node to edit its label and description. Shift-drag a selection box to select multiple nodes.
-- Select a node or connection and use **Delete selection**, Delete or Backspace. Deleting a node removes its connections. The Start node remains in the workflow.
+- Select a node or connection and use **Delete selection**, Delete or Backspace. Deleting any node, including a Start, removes its connections.
 - Drag the canvas to pan, scroll to zoom, and use the canvas controls to zoom or fit the graph.
 
 - Select **Validate** to check whether the workflow is ready to run. Use **Locate** beside an issue to select its node and center the canvas on it. After adding or removing nodes or connections, run Validate again.
+- Each Start is an independent entry point. A Merge brings multiple paths together visually and has one output. The editor does not define execution synchronization for Merge.
 
 ## Save and share a draft
 

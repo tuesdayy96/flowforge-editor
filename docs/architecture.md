@@ -10,7 +10,7 @@ The toolbar runs validation on demand. The result is tied to the graph revision 
 
 ## Application
 
-`store/workflowStore.ts` owns the in-memory editor. The Zustand actions apply incoming changesets, edit node properties, validate and add connections, and remove incident edges when nodes are deleted. The initial Start node is protected from deletion.
+`store/workflowStore.ts` owns the in-memory editor. The Zustand actions apply incoming changesets, edit node properties, validate and add connections, and remove incident edges when nodes are deleted. The single Start restriction was replaced with independent entry points. A draft can contain zero or more Starts, and any Start can be deleted.
 
 Selection IDs are derived from the controlled nodes and edges. React Flow supplies selection, drag and measurement fields alongside document data, and the store keeps one working copy of each element. `replaceDocument` accepts a validated document for restore or import, replaces the graph and viewport in one update, and remounts the editor so selection and React Flow internals start fresh.
 
@@ -20,7 +20,7 @@ Changesets are read without mutation. The store accepts canvas selection, moveme
 
 `domain/connection.ts` defines the node types, compatible port IDs and connection rules. Before accepting a link, it searches from the proposed target for the proposed source using an adjacency map. Finding the source means the new link would close a cycle. The canvas uses this check for drag feedback, and the store reruns it against current state when committing a connection.
 
-`domain/validation.ts` checks an entire workflow and returns deterministic issues with codes, severity, messages and optional node and edge IDs. Iterative depth-first search detects cycles across all components. Traversals from Start and back from the End nodes expose unreachable nodes and reachable nodes without a route to End. Port and output checks ensure that required branches are present. Both validators work on plain graph data and are covered by Vitest.
+`domain/validation.ts` checks an entire workflow and returns deterministic issues with codes, severity, messages and optional node and edge IDs. Iterative depth-first search detects cycles across all components. Forward traversal from all Start nodes finds the union of reachable nodes. Reverse traversal from all End nodes identifies nodes with an exit path and checks each Condition output separately. Merge accepts several incoming links through one input handle and requires one outgoing link. It represents a visual junction. Both validators work on plain graph data and are covered by Vitest.
 
 ## Persistence and interchange
 

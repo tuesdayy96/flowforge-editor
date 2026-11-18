@@ -78,6 +78,25 @@ describe('canConnect', () => {
     expect(canConnect(returnEdge, nodes, [connection])).toBe(false)
   })
 
+  it('allows multiple Merge inputs, reserves its output and blocks cycles through it', () => {
+    const candidateNodes = [...nodes, { id: 'merge', type: 'merge' as const }]
+    const first = { ...connection, source: 'start', target: 'merge' }
+    const second = { ...connection, target: 'merge' }
+    const output = { ...connection, source: 'merge', target: 'end' }
+    expect(canConnect(first, candidateNodes, [])).toBe(true)
+    expect(canConnect(second, candidateNodes, [first])).toBe(true)
+    expect(canConnect(output, candidateNodes, [first, second])).toBe(true)
+    expect(
+      canConnect({ ...output, target: 'condition' }, candidateNodes, [output]),
+    ).toBe(false)
+    expect(
+      canConnect({ ...output, target: 'action' }, candidateNodes, [
+        first,
+        second,
+      ]),
+    ).toBe(false)
+  })
+
   it('detects indirect cycles without rejecting convergent branches', () => {
     const extraNodes = [...nodes, { id: 'next', type: 'action' as const }]
     const branch = {

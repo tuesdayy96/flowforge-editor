@@ -11,7 +11,9 @@ The browser draft and exported files use UTF-8 JSON with the same versioned mode
 | `edges`         | Up to 1,000 entries with `id`, `source`, `sourceHandle`, `target` and `targetHandle` |
 | `viewport`      | Finite `x`, `y` and `zoom`, with zoom from 0.5 to 2                                  |
 
-Node types are `start`, `action`, `condition` and `end`. Positions contain finite `x` and `y` numbers. Node data contains a `label` of up to 120 characters and a `description` of up to 4,000 characters. Condition connections retain their `true` and `false` output IDs.
+Node types are `start`, `action`, `condition`, `merge` and `end`. Positions contain finite `x` and `y` numbers. Node data contains a `label` of up to 120 characters and a `description` of up to 4,000 characters. Condition connections retain their `true` and `false` output IDs. Merge accepts multiple incoming edges at `in` and up to one outgoing edge at `out`. It represents a visual junction with no execution synchronization semantics.
+
+A draft can have any number of Starts. A valid workflow has at least one Start, and every node must be reachable from at least one of them. Existing version 1 documents use the same fields, handles and storage key and can be opened directly.
 
 Identifiers and handle names are 1–128 characters using ASCII letters, digits, dots, underscores, colons or hyphens. Node IDs and edge IDs must be unique within their respective arrays. Edge endpoints must reference existing nodes and their declared handles. The 1 MiB limit applies both to incoming JSON and the formatted document, so a draft that can be imported can also be exported.
 

@@ -18,6 +18,7 @@ export type ValidationCode =
   | 'output-already-connected'
   | 'unreachable-node'
   | 'no-path-to-end'
+  | 'branch-no-path-to-end'
   | 'missing-output'
   | 'cycle'
 
@@ -60,21 +61,19 @@ export function validateWorkflow(
     }
   }
 
-  const starts = nodes.filter((node) => node.type === 'start')
+  const startIds = nodes
+    .filter((node) => node.type === 'start')
+    .map((node) => node.id)
   const endIds = nodes
     .filter((node) => node.type === 'end')
     .map((node) => node.id)
-  if (starts.length !== 1) {
-    error('start-count', `Expected one Start node. Found ${starts.length}.`, {
-      nodeId: starts[1]?.id,
-    })
-  }
+  if (!startIds.length) error('start-count', 'Add at least one Start node.')
   if (!endIds.length) error('end-missing', 'Add at least one End node.')
 
   const edgeIds = new Set<string>()
   const referencedEdges: ValidationEdge[] = []
   const traversableEdges: ValidationEdge[] = []
-  const connectedOutputs = new Map<string, Set<string>>()
+  const connectedOutputs = new Map<string, Map<string, ValidationEdge>>()
 
   for (const edge of edges) {
     if (edgeIds.has(edge.id)) {
@@ -110,7 +109,8 @@ export function validateWorkflow(
       continue
     }
 
-    const outputs = connectedOutputs.get(source.id) ?? new Set<string>()
+    const outputs =
+      connectedOutputs.get(source.id) ?? new Map<string, ValidationEdge>()
     if (outputs.has(edge.sourceHandle)) {
       error(
         'output-already-connected',
@@ -122,7 +122,7 @@ export function validateWorkflow(
       )
       continue
     }
-    outputs.add(edge.sourceHandle)
+    outputs.set(edge.sourceHandle, edge)
     connectedOutputs.set(source.id, outputs)
     traversableEdges.push(edge)
   }
@@ -139,10 +139,9 @@ export function validateWorkflow(
     )
   }
 
-  const reachable =
-    starts.length === 1
-      ? reachableFrom([starts[0].id], buildAdjacency(traversableEdges))
-      : undefined
+  const reachable = startIds.length
+    ? reachableFrom(startIds, buildAdjacency(traversableEdges))
+    : undefined
   const canReachEnd = endIds.length
     ? reachableFrom(endIds, buildAdjacency(traversableEdges, true))
     : undefined
@@ -152,21 +151,34 @@ export function validateWorkflow(
     if (reachable && !reachable.has(node.id)) {
       error(
         'unreachable-node',
-        'Connect this node to a path from Start or remove it.',
+        'Connect this node to a path from a Start node or remove it.',
         location,
       )
     }
-    if (reachable?.has(node.id) && canReachEnd && !canReachEnd.has(node.id)) {
+    if (canReachEnd && !canReachEnd.has(node.id)) {
       error('no-path-to-end', 'Connect this path to an End node.', location)
     }
     for (const output of workflowPorts[node.type].outputs) {
-      if (!connectedOutputs.get(node.id)?.has(output)) {
+      const connection = connectedOutputs.get(node.id)?.get(output)
+      if (!connection) {
         error(
           'missing-output',
           node.type === 'condition'
             ? `Connect the ${output} branch.`
-            : 'Connect this node’s output.',
+            : node.type === 'merge'
+              ? 'Connect the Merge output to the next node.'
+              : 'Connect this node’s output.',
           location,
+        )
+      } else if (
+        node.type === 'condition' &&
+        canReachEnd &&
+        !canReachEnd.has(connection.target)
+      ) {
+        error(
+          'branch-no-path-to-end',
+          `Connect the ${output} branch to a path that reaches an End node.`,
+          { ...location, edgeId: connection.id },
         )
       }
     }

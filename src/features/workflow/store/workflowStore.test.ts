@@ -26,25 +26,20 @@ function addLinkedAction() {
 beforeEach(() => setState(getInitialState(), true))
 
 describe('workflow store graph revision', () => {
-  it('lets imported drafts repair the Start count while protecting the remaining Start', () => {
+  it('lets empty drafts add multiple Starts and delete the last Start', () => {
     const empty = { ...projectDocument(getState()), nodes: [] }
     getState().replaceDocument(validateDocument(empty), 'import')
     getState().addNode('start', position)
     getState().addNode('start', position)
-    expect(getState().nodes).toHaveLength(1)
-
-    const draft = projectDocument(getState())
-    getState().replaceDocument(
-      validateDocument({
-        ...draft,
-        nodes: [...draft.nodes, { ...draft.nodes[0], id: 'extra-start' }],
-      }),
-      'import',
-    )
-    getState().selectNode('extra-start')
-    getState().removeSelection()
-    expect(getState().nodes).toHaveLength(1)
-    expect(getState().nodes[0].deletable).toBe(false)
+    const ids = getState().nodes.map((node) => node.id)
+    expect(new Set(ids).size).toBe(2)
+    for (const id of ids) {
+      getState().selectNode(id)
+      getState().removeSelection()
+    }
+    expect(getState().nodes).toEqual([])
+    getState().addNode('merge', position)
+    expect(getState().nodes[0].type).toBe('merge')
   })
 
   it('keeps validation current through changes to layout, label and selection', () => {
@@ -77,18 +72,17 @@ describe('workflow store graph revision', () => {
     expect(action.position).toEqual(position)
   })
 
-  it('protects Start, preserves the input changeset and removes incident edges atomically', () => {
+  it('deletes Start, preserves the input changeset and removes incident edges atomically', () => {
     const { start, action } = addLinkedAction()
     const revision = getState().graphRevision
     const changes = new NodeChangeset<WorkflowNode>([
       { type: 'remove', id: start.id },
-      { type: 'remove', id: action.id },
     ])
 
     getState().applyNodeChanges(changes)
 
-    expect(changes.toArray()).toHaveLength(2)
-    expect(getState().nodes.map((node) => node.id)).toEqual([start.id])
+    expect(changes.toArray()).toHaveLength(1)
+    expect(getState().nodes.map((node) => node.id)).toEqual([action.id])
     expect(getState().edges).toEqual([])
     expect(getState().graphRevision).toBe(revision + 1)
   })

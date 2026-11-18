@@ -37,6 +37,30 @@ afterEach(() => {
 })
 
 describe('workflow autosave', () => {
+  it('restores multiple Starts and preserves their links into a Merge', () => {
+    const storage = storageWith()
+    persistence = connectWorkflowPersistence(() => storage)
+    getState().addNode('start', { x: 50, y: 80 })
+    getState().addNode('merge', { x: 200, y: 120 })
+    const [first, second, merge] = getState().nodes
+    for (const start of [first, second]) {
+      getState().addEdge({
+        source: start.id,
+        sourceHandle: 'out',
+        target: merge.id,
+        targetHandle: 'in',
+      })
+    }
+    const saved = projectDocument(getState())
+    persistence.flush()
+    persistence.disconnect()
+    setState(getInitialState(), true)
+    persistence = connectWorkflowPersistence(() => storage)
+    expect(projectDocument(getState())).toEqual(saved)
+    expect(getState().edges).toHaveLength(2)
+    expect(storage.setItem).toHaveBeenCalledTimes(1)
+  })
+
   it('restores the validated draft before subscribing and does not write a default document', () => {
     const saved = {
       ...projectDocument(getState()),

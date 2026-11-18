@@ -5,6 +5,7 @@ export const nodeLabels = {
   start: 'Start',
   action: 'Action',
   condition: 'Condition',
+  merge: 'Merge',
   end: 'End',
 } satisfies Record<WorkflowNodeType, string>
 
@@ -23,6 +24,5 @@ export function createWorkflowNode(
     type,
     position,
     data: { label: nodeLabels[type], description: '' },
-    deletable: type !== 'start',
   }
 }

@@ -67,7 +67,6 @@ export const useWorkflowStore = create<WorkflowState>()((set) => ({
   graphRevision: 0,
   replaceDocument: (document, source) =>
     set((state) => {
-      const firstStart = document.nodes.find((node) => node.type === 'start')
       return {
         documentId: document.id,
         documentName: document.name,
@@ -76,7 +75,6 @@ export const useWorkflowStore = create<WorkflowState>()((set) => ({
           ...node,
           position: { ...node.position },
           data: { ...node.data },
-          deletable: node !== firstStart,
         })),
         edges: document.edges.map((edge) => ({ ...edge })),
         graphRevision: state.graphRevision + 1,
@@ -94,14 +92,10 @@ export const useWorkflowStore = create<WorkflowState>()((set) => ({
         : { viewport: { ...viewport } }
     }),
   addNode: (type, position) =>
-    set((state) => {
-      if (type === 'start' && state.nodes.some((node) => node.type === 'start'))
-        return state
-      return {
-        nodes: [...state.nodes, createWorkflowNode(type, position)],
-        graphRevision: state.graphRevision + 1,
-      }
-    }),
+    set((state) => ({
+      nodes: [...state.nodes, createWorkflowNode(type, position)],
+      graphRevision: state.graphRevision + 1,
+    })),
   updateNode: (id, changes) =>
     set((state) => {
       const { nodes } = state

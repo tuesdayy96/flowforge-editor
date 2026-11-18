@@ -8,6 +8,7 @@ const paletteItems = [
   { type: 'start', symbol: '▷', description: 'Entry point' },
   { type: 'action', symbol: '↗', description: 'Perform a task' },
   { type: 'condition', symbol: '◇', description: 'Branch by a rule' },
+  { type: 'merge', symbol: '⇥', description: 'Bring paths together' },
   { type: 'end', symbol: '□', description: 'Exit point' },
 ] satisfies Array<{
   type: WorkflowNodeType
@@ -22,9 +23,6 @@ export function NodePalette({
 }) {
   const { screenToFlowPosition } = useReactFlow()
   const addNode = useWorkflowStore((state) => state.addNode)
-  const hasStart = useWorkflowStore((state) =>
-    state.nodes.some((node) => node.type === 'start'),
-  )
 
   function addAtCenter(type: WorkflowNodeType) {
     const bounds = surfaceRef.current?.getBoundingClientRect()
@@ -46,10 +44,14 @@ export function NodePalette({
         <p>Add a node at the center of the canvas.</p>
       </div>
       <ul className="node-list">
-        {paletteItems.map(({ type, symbol, description }) => {
-          const existingStart = type === 'start' && hasStart
-          const content = (
-            <>
+        {paletteItems.map(({ type, symbol, description }) => (
+          <li key={type}>
+            <button
+              className="node-card flex w-full items-center gap-3 text-left"
+              type="button"
+              aria-label={`Add ${nodeLabels[type]} node`}
+              onClick={() => addAtCenter(type)}
+            >
               <span
                 className={`node-symbol node-symbol--${type}`}
                 aria-hidden="true"
@@ -58,31 +60,11 @@ export function NodePalette({
               </span>
               <span>
                 <span className="block font-semibold">{nodeLabels[type]}</span>
-                <span className="node-card-description">
-                  {existingStart ? 'Already on the canvas' : description}
-                </span>
+                <span className="node-card-description">{description}</span>
               </span>
-            </>
-          )
-          const className = 'node-card flex w-full items-center gap-3 text-left'
-
-          return (
-            <li key={type}>
-              {existingStart ? (
-                <div className={className}>{content}</div>
-              ) : (
-                <button
-                  className={className}
-                  type="button"
-                  aria-label={`Add ${nodeLabels[type]} node`}
-                  onClick={() => addAtCenter(type)}
-                >
-                  {content}
-                </button>
-              )}
-            </li>
-          )
-        })}
+            </button>
+          </li>
+        ))}
       </ul>
     </aside>
   )

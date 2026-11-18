@@ -21,6 +21,8 @@
   --condition-bg: #fff1d8;
   --end: #983b59;
   --end-bg: #fbeaf0;
+  --merge: #6845a5;
+  --merge-bg: #f0eaff;
   font-family: Inter, 'Segoe UI', system-ui, sans-serif;
   color: var(--text);
   background: var(--surface);
@@ -135,6 +137,11 @@ h3 {
 .node-symbol--end {
   color: var(--end);
   background: var(--end-bg);
+}
+
+.node-symbol--merge {
+  color: var(--merge);
+  background: var(--merge-bg);
 }
 
 .inspector-empty {
@@ -319,6 +326,10 @@ button.node-card:hover {
 
 .workflow-node--end {
   --node-tone: var(--end);
+}
+
+.workflow-node--merge {
+  --node-tone: var(--merge);
 }
 
 .workflow-node-type {
