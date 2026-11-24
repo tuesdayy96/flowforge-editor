@@ -1,5 +1,9 @@
 import { useTranslation, type MessageKey } from '@/shared/i18n'
 import type { RefObject } from 'react'
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
 import { useReactFlow } from '@xyflow/react'
 import type { WorkflowNodeType } from '../domain/connection'
 import { nodeLabels } from '../model/workflowNode'
@@ -23,6 +27,7 @@ export function NodePalette({
   surfaceRef: RefObject<HTMLDivElement | null>
 }) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   const { screenToFlowPosition } = useReactFlow()
   const addNode = useWorkflowStore((state) => state.addNode)
 
@@ -52,6 +57,7 @@ export function NodePalette({
               className="node-card flex w-full items-center gap-3 text-left"
               type="button"
               aria-label={t('addNode', { type: nodeLabels[type] })}
+              disabled={locked}
               onClick={() => addAtCenter(type)}
             >
               <span

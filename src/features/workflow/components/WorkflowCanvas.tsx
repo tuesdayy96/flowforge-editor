@@ -1,3 +1,7 @@
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
 import { useTranslation } from '@/shared/i18n'
 import { useMemo, useState, type RefObject } from 'react'
 import {
@@ -32,20 +36,37 @@ export function WorkflowCanvas({
   showMiniMap: boolean
 }) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   useEditorShortcuts(surfaceRef)
   const nodes = useWorkflowStore((state) => state.nodes)
   const edges = useWorkflowStore((state) => state.edges)
-  const visibleEdges = useMemo(
-    () =>
-      edges.map((edge) => ({
-        ...edge,
-        ariaLabel: t('flowEdgeLabel', {
-          source: edge.source,
-          target: edge.target,
-        }),
-      })),
-    [edges, t],
-  )
+  const { currentNodeId, error, visitedNodeIds, traversedEdgeIds } =
+    useSimulationStore((state) => state.simulation)
+  const visibleNodes = useMemo(() => {
+    const visited = new Set(visitedNodeIds)
+    return nodes.map((node) => {
+      const status =
+        node.id === currentNodeId
+          ? error
+            ? 'error'
+            : 'current'
+          : visited.has(node.id)
+            ? 'visited'
+            : undefined
+      return status ? { ...node, className: `simulation-node-${status}` } : node
+    })
+  }, [nodes, currentNodeId, error, visitedNodeIds])
+  const visibleEdges = useMemo(() => {
+    const traversed = new Set(traversedEdgeIds)
+    return edges.map((edge) => ({
+      className: traversed.has(edge.id) ? 'simulation-edge' : undefined,
+      ...edge,
+      ariaLabel: t('flowEdgeLabel', {
+        source: edge.source,
+        target: edge.target,
+      }),
+    }))
+  }, [edges, t, traversedEdgeIds])
   const addEdge = useWorkflowStore((state) => state.addEdge)
   const applyNodeChanges = useWorkflowStore((state) => state.applyNodeChanges)
   const applyEdgeChanges = useWorkflowStore((state) => state.applyEdgeChanges)
@@ -88,7 +109,10 @@ export function WorkflowCanvas({
               t('flowMove', { x, y }),
             'handle.ariaLabel': t('flowEdge'),
           }}
-          nodes={nodes}
+          nodes={visibleNodes}
+          nodesDraggable={!locked}
+          nodesConnectable={!locked}
+          disableKeyboardA11y={locked}
           edges={visibleEdges}
           defaultViewport={defaultViewport}
           minZoom={MIN_ZOOM}

@@ -6,6 +6,12 @@ import {
   type WorkflowNode,
 } from './workflowNode'
 
+import {
+  conditionOperators,
+  isConditionField,
+  isEqualityOperator,
+} from './workflowCondition'
+
 export const SCHEMA_VERSION = 1
 export const DEFAULT_WORKFLOW_NAME = 'Untitled workflow'
 export const DOCUMENT_LIMITS = {
@@ -41,15 +47,37 @@ const documentSchema = z.strictObject({
   name: z.string().max(DOCUMENT_LIMITS.name),
   nodes: z
     .array(
-      z.strictObject({
-        id: identifier,
-        type: z.enum(nodeTypes),
-        position: positionSchema,
-        data: z.strictObject({
-          label: z.string().max(DOCUMENT_LIMITS.label),
-          description: z.string().max(DOCUMENT_LIMITS.description),
-        }),
-      }),
+      z
+        .strictObject({
+          id: identifier,
+          type: z.enum(nodeTypes),
+          position: positionSchema,
+          data: z.strictObject({
+            label: z.string().max(DOCUMENT_LIMITS.label),
+            description: z.string().max(DOCUMENT_LIMITS.description),
+            condition: z
+              .strictObject({
+                field: z.string().refine(isConditionField),
+                operator: z.enum(conditionOperators),
+                value: z.union([
+                  z.string().max(DOCUMENT_LIMITS.description),
+                  z.number(),
+                  z.boolean(),
+                ]),
+              })
+              .refine(
+                ({ operator, value }) =>
+                  isEqualityOperator(operator) || typeof value === 'number',
+                { path: ['value'] },
+              )
+              .optional(),
+          }),
+        })
+        .refine(
+          ({ type, data }) =>
+            type === 'condition' || data.condition === undefined,
+          { path: ['data', 'condition'] },
+        ),
     )
     .max(DOCUMENT_LIMITS.nodes),
   edges: z

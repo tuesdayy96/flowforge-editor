@@ -1,3 +1,8 @@
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
+import { ConditionProperties } from './ConditionProperties'
 import { useTranslation } from '@/shared/i18n'
 import { useId } from 'react'
 import { useShallow } from 'zustand/react/shallow'
@@ -9,6 +14,7 @@ type EditableNode = Pick<WorkflowNode, 'id' | 'type' | 'data'>
 
 function NodeProperties({ node }: { node: EditableNode }) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   const id = useId()
   const updateNode = useWorkflowStore((state) => state.updateNode)
   const beginEdit = useWorkflowStore((state) => state.beginEdit)
@@ -25,6 +31,7 @@ function NodeProperties({ node }: { node: EditableNode }) {
       <label htmlFor={`${id}-label`}>{t('label')}</label>
       <input
         id={`${id}-label`}
+        disabled={locked}
         maxLength={DOCUMENT_LIMITS.label}
         value={node.data.label}
         onFocus={() => beginEdit('property')}
@@ -34,6 +41,7 @@ function NodeProperties({ node }: { node: EditableNode }) {
       <label htmlFor={`${id}-description`}>{t('description')}</label>
       <textarea
         id={`${id}-description`}
+        disabled={locked}
         maxLength={DOCUMENT_LIMITS.description}
         rows={4}
         value={node.data.description}
@@ -43,6 +51,13 @@ function NodeProperties({ node }: { node: EditableNode }) {
           updateNode(node.id, { description: event.target.value })
         }
       />
+      {node.type === 'condition' && (
+        <ConditionProperties
+          nodeId={node.id}
+          condition={node.data.condition}
+          locked={locked}
+        />
+      )}
     </div>
   )
 }

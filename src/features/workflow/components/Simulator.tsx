@@ -1,0 +1,155 @@
+import { useId, useState } from 'react'
+import { useReactFlow } from '@xyflow/react'
+import { useTranslation } from '@/shared/i18n'
+import { fitViewOptions } from '../hooks/useEditorShortcuts'
+import { nodeLabels, projectGraph } from '../model/workflowNode'
+import { isSimulationActive } from '../domain/simulation'
+import { useSimulationStore } from '../store/simulationStore'
+import { useWorkflowStore } from '../store/workflowStore'
+
+export function Simulator({
+  speed,
+  setSpeed,
+}: {
+  speed: number
+  setSpeed: (speed: number) => void
+}) {
+  const t = useTranslation()
+  const id = useId()
+  const { fitView } = useReactFlow()
+  const nodes = useWorkflowStore((state) => state.nodes)
+  const { simulation, start, step, run, pause, stop, reset } =
+    useSimulationStore()
+  const locked = isSimulationActive(simulation.status)
+  const [selectedStart, setSelectedStart] = useState('')
+  const [input, setInput] = useState('{}')
+  const starts = nodes.filter((node) => node.type === 'start')
+  const startId = starts.some((node) => node.id === selectedStart)
+    ? selectedStart
+    : starts[0]?.id
+  const { status, log, error, currentNodeId, visitedNodeIds } = simulation
+  const current = nodes.find((node) => node.id === currentNodeId)
+  const canStep = status === 'ready' || status === 'paused'
+
+  return (
+    <section
+      aria-label={t('simulation')}
+      className="simulation inspector-fields"
+    >
+      <p className="simulation-status" role="status">
+        <strong>{t(`sim_${status}`)}</strong>
+        {current && (
+          <span> · {current.data.label || nodeLabels[current.type]}</span>
+        )}
+        {locked && <span className="simulation-hint">{t('simLocked')}</span>}
+      </p>
+      <label htmlFor={`${id}-start`}>{t('simStartNode')}</label>
+      <select
+        id={`${id}-start`}
+        value={startId ?? ''}
+        disabled={locked || !starts.length}
+        onChange={(event) => setSelectedStart(event.target.value)}
+      >
+        {!starts.length && <option value="">{t('simNoStart')}</option>}
+        {starts.map((node) => (
+          <option key={node.id} value={node.id}>
+            {node.data.label || nodeLabels.start} · {node.id}
+          </option>
+        ))}
+      </select>
+      <label htmlFor={`${id}-input`}>{t('simInput')}</label>
+      <textarea
+        id={`${id}-input`}
+        rows={4}
+        value={input}
+        disabled={locked}
+        aria-describedby={`${id}-hint`}
+        spellCheck={false}
+        onChange={(event) => setInput(event.target.value)}
+      />
+      <p id={`${id}-hint`} className="simulation-hint">
+        {t('simInputHint')}
+      </p>
+      <label htmlFor={`${id}-speed`}>{t('simSpeed')}</label>
+      <select
+        id={`${id}-speed`}
+        value={speed}
+        onChange={(event) => setSpeed(Number(event.target.value))}
+      >
+        <option value={1000}>{t('simSlow')}</option>
+        <option value={500}>{t('simNormal')}</option>
+        <option value={200}>{t('simFast')}</option>
+      </select>
+      <div className="simulation-actions">
+        <button
+          type="button"
+          disabled={locked || !startId}
+          onClick={() => {
+            if (startId)
+              start(projectGraph(useWorkflowStore.getState()), startId, input)
+          }}
+        >
+          {t('simStart')}
+        </button>
+        <button type="button" disabled={!canStep} onClick={step}>
+          {t('simStep')}
+        </button>
+        <button type="button" disabled={!canStep} onClick={run}>
+          {t(status === 'paused' ? 'simResume' : 'simRun')}
+        </button>
+        <button type="button" disabled={status !== 'running'} onClick={pause}>
+          {t('simPause')}
+        </button>
+        <button type="button" disabled={!locked} onClick={stop}>
+          {t('simStop')}
+        </button>
+        <button type="button" disabled={status === 'idle'} onClick={reset}>
+          {t('simReset')}
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="simulation-error">
+          {t(`sim_${error}`)}
+        </p>
+      )}
+      <h3>{t('simResult')}</h3>
+      <p>
+        {t('simSummary', {
+          nodes: visitedNodeIds.length,
+          edges: simulation.traversedEdgeIds.length,
+        })}
+      </p>
+      <h3>{t('simLog')}</h3>
+      {!log.length && <p className="simulation-hint">{t('simEmptyLog')}</p>}
+      <ol className="simulation-log" aria-label={t('simLog')}>
+        {log.map(({ step, node, result, error }) => (
+          <li key={step}>
+            <button
+              type="button"
+              title={node.id}
+              disabled={!nodes.some(({ id }) => id === node.id)}
+              onClick={() =>
+                void fitView({ ...fitViewOptions, nodes: [{ id: node.id }] })
+              }
+            >
+              <strong>
+                {step}. {nodeLabels[node.type]} · {node.data.label || node.id}
+              </strong>
+              <small>{node.id}</small>
+              <span>
+                {error
+                  ? t(`sim_${error}`)
+                  : t(`sim_event_${node.type}`, { result: String(result) })}
+              </span>
+              {error && result !== undefined && (
+                <span>
+                  {t('sim_event_condition', { result: String(result) })}
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}

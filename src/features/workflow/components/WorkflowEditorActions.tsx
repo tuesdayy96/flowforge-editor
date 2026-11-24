@@ -1,3 +1,7 @@
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
 import { useTranslation } from '@/shared/i18n'
 import { useReactFlow } from '@xyflow/react'
 import { fitViewOptions } from '../hooks/useEditorShortcuts'
@@ -17,6 +21,7 @@ export function WorkflowEditorActions({
   toggleMiniMap,
 }: MiniMapControls) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   const canUndo = useWorkflowStore(selectCanUndo)
   const canRedo = useWorkflowStore(selectCanRedo)
   const canCopy = useWorkflowStore(({ nodes }) =>
@@ -37,7 +42,7 @@ export function WorkflowEditorActions({
         type="button"
         className="toolbar-file"
         title={t('undoTip')}
-        disabled={!canUndo}
+        disabled={locked || !canUndo}
         onClick={undo}
       >
         {t('undo')}
@@ -46,7 +51,7 @@ export function WorkflowEditorActions({
         type="button"
         className="toolbar-file"
         title={t('redoTip')}
-        disabled={!canRedo}
+        disabled={locked || !canRedo}
         onClick={redo}
       >
         {t('redo')}
@@ -64,7 +69,7 @@ export function WorkflowEditorActions({
         type="button"
         className="toolbar-file"
         title={t('pasteTip')}
-        disabled={!canPaste}
+        disabled={locked || !canPaste}
         onClick={paste}
       >
         {t('paste')}

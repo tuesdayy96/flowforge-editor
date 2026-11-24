@@ -9,6 +9,9 @@ import { WorkflowToolbar } from '@/features/workflow/components/WorkflowToolbar'
 import type { WorkflowPersistence } from '@/features/workflow/services/workflowPersistence'
 import { useWorkflowStore } from '@/features/workflow/store/workflowStore'
 
+import { Simulator } from '@/features/workflow/components/Simulator'
+import { useSimulationClock } from '@/features/workflow/hooks/useSimulationClock'
+
 export function App({ persistence }: { persistence: WorkflowPersistence }) {
   const generation = useWorkflowStore((state) => state.documentGeneration)
   const [showMiniMap, setShowMiniMap] = useState(true)
@@ -28,6 +31,9 @@ function Editor({
   toggleMiniMap,
 }: { persistence: WorkflowPersistence } & MiniMapControls) {
   const surfaceRef = useRef<HTMLDivElement>(null)
+  const [showSimulator, setShowSimulator] = useState(false)
+  const [speed, setSpeed] = useState(500)
+  useSimulationClock(speed)
 
   return (
     <ReactFlowProvider>
@@ -37,13 +43,28 @@ function Editor({
             persistence={persistence}
             showMiniMap={showMiniMap}
             toggleMiniMap={toggleMiniMap}
+            showSimulator={showSimulator}
+            toggleSimulator={() => setShowSimulator((visible) => !visible)}
           />
         }
         palette={<NodePalette surfaceRef={surfaceRef} />}
         canvas={
           <WorkflowCanvas surfaceRef={surfaceRef} showMiniMap={showMiniMap} />
         }
-        inspector={<PropertyInspector />}
+        inspector={
+          <div className="editor-sidebar">
+            <div hidden={showSimulator}>
+              <PropertyInspector />
+            </div>
+            <aside
+              id="workflow-simulator"
+              className="panel inspector"
+              hidden={!showSimulator}
+            >
+              <Simulator speed={speed} setSpeed={setSpeed} />
+            </aside>
+          </div>
+        }
       />
     </ReactFlowProvider>
   )

@@ -68,6 +68,23 @@ describe('workflow document', () => {
     expect(validateDocument(document)).toEqual(document)
   })
 
+  it('round-trips optional Condition settings and validates the comparison type', () => {
+    const configured = structuredClone(document)
+    configured.nodes[1].data.condition = {
+      field: 'order.amount',
+      operator: 'gte',
+      value: 100,
+    }
+    expect(deserializeDocument(serializeDocument(configured))).toEqual(
+      configured,
+    )
+    expect(
+      deserializeDocument(serializeDocument(document)).nodes[1].data.condition,
+    ).toBeUndefined()
+    configured.nodes[1].data.condition.value = '100'
+    expect(() => validateDocument(configured)).toThrow()
+  })
+
   it('round-trips multiple Starts and a Merge using the existing version 1 format', () => {
     const merged: WorkflowDocument = {
       ...document,

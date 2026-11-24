@@ -1,3 +1,7 @@
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
 import { useTranslation } from '@/shared/i18n'
 import { useState } from 'react'
 import { validateWorkflow, type ValidationResult } from '../domain/validation'
@@ -22,10 +26,13 @@ export function WorkflowToolbar({
   persistence,
   showMiniMap,
   toggleMiniMap,
+  showSimulator,
+  toggleSimulator,
 }: {
   persistence: WorkflowPersistence
-} & MiniMapControls) {
+} & MiniMapControls & { showSimulator: boolean; toggleSimulator: () => void }) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   const [fileError, setFileError] = useState<WorkflowFileError>()
   const [validation, setValidation] = useState<
     | {
@@ -73,6 +80,7 @@ export function WorkflowToolbar({
         <h1 className="sr-only">{displayedName}</h1>
         <input
           className="workflow-title"
+          disabled={locked}
           aria-label={t('workflowName')}
           title={t('editName')}
           maxLength={DOCUMENT_LIMITS.name}
@@ -113,11 +121,20 @@ export function WorkflowToolbar({
           <button
             className="toolbar-delete"
             type="button"
-            disabled={!canDeleteSelection}
+            disabled={locked || !canDeleteSelection}
             title={t('removeTip')}
             onClick={removeSelection}
           >
             {t('remove')}
+          </button>
+          <button
+            className="toolbar-file"
+            type="button"
+            aria-expanded={showSimulator}
+            aria-controls="workflow-simulator"
+            onClick={toggleSimulator}
+          >
+            {t('simulation')}
           </button>
           <GuideControls />
           <LanguageSelect />

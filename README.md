@@ -52,6 +52,12 @@ Canvas shortcuts include Ctrl/Cmd+Z for undo, Ctrl/Cmd+Shift+Z or Ctrl+Y for red
 
 If a local draft fails to restore, the editor keeps it until you confirm replacement.
 
+## Simulate a workflow
+
+Connect each output to a path that ends at an End node. For each Condition, save a field path, comparison operator and JSON value in Properties. For example, set `amount`, `gte` and `100000`, then enter `{"amount":150000}` in Simulator to take the `true` output.
+
+Choose a Start and select **Start simulation**. Use **Step** to execute one node or **Run** to advance automatically at the selected speed. **Pause**, **Resume**, **Stop** and **Reset** control the session. Choose a log entry to locate its node on the canvas. Editing resumes when the session finishes, stops or resets.
+
 ## Testing
 
 ```sh
@@ -65,8 +71,10 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+Phase 7 verification passed 92 Vitest tests and 10 Playwright Chromium tests. V8 coverage for the configured modules was 91.85% statements, 84.94% branches, 97.04% functions and 95.44% lines.
+
 ## Technical decisions
 
 - Document validation is separate from graph validation, so incomplete drafts can be saved.
 - Storage keeps document fields only. History stays in memory, and paste remaps IDs and connections.
-- Merge represents a visual junction. Workflow execution is outside the editor's scope.
+- The browser simulator follows a single Start and passes through Merge on arrival. Action nodes record a simulated event.

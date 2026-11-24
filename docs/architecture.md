@@ -36,6 +36,16 @@ The store records bounded snapshots of the persisted node and edge fields. A sna
 
 The editor clipboard projects selected nodes and edges with both endpoints selected. Paste allocates fresh node and edge IDs, remaps endpoints, revalidates connections, and applies temporary selection and an increasing offset. The full paste is one edit. The canvas registers its own shortcut listener and removes it on unmount. Toolbar and shortcuts use the same store actions, and React Flow provides the MiniMap and multi-selection.
 
+## Simulation
+
+`domain/simulation.ts` validates the graph and creates a detached snapshot of its execution-relevant data. Pure step transitions choose an outgoing handle, record an ordered event and advance the current node. End completes the run. Each Merge continues from its single outgoing edge. Invalid input or a broken path ends the run with a structured error. Execution is bounded to 500 steps.
+
+`store/simulationStore.ts` owns the session independently of document state. Ready, running and paused sessions lock mutation commands in the workflow store. Canvas pan and zoom, export, and log navigation remain available. The editor clock schedules one timeout per running state and speed, cancels it on cleanup and checks session identity before advancing. The simulator panel and canvas derive their displays from the session. The engine runs entirely in the browser, with Action producing a log event.
+
+React Flow 13 renders a marquee during Shift-drag, then a separate group rectangle for moving the selection. The group rectangle retains its pointer target with a transparent background and border. Individual selection and execution highlights are styled independently.
+
+The design decisions are recorded in [Phase 7 simulation and selection](decisions/phase-7-simulation-and-selection.md).
+
 ## Localization and help
 
 The presentation layer uses typed Korean and English dictionaries in `src/shared/i18n/`. Locale and onboarding preferences have their own Zustand store and storage keys. Switching languages updates the page language and translated labels without replacing the editor. The guide and first-run tour render in a native modal dialog and return focus to Help when closed.

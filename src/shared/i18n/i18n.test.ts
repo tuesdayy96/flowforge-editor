@@ -78,7 +78,7 @@ describe('editor localization', () => {
       /필수 필드.*schemaVersion/,
     )
     for (const locale of ['ko', 'en'] as const) {
-      expect(guideContent[locale]).toHaveLength(12)
+      expect(guideContent[locale]).toHaveLength(13)
       expect(tourContent[locale]).toHaveLength(5)
       for (const node of Object.values(nodeLabels)) {
         expect(translator(locale)('addNode', { type: node })).toContain(node)

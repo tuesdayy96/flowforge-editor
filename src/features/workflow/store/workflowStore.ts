@@ -21,6 +21,8 @@ import {
   type WorkflowNodeData,
 } from '../model/workflowNode'
 
+import { isEditingLocked, useSimulationStore } from './simulationStore'
+
 const HISTORY_LIMIT = 100
 type EditKind = 'drag' | 'property'
 type GraphPatch = Partial<
@@ -169,6 +171,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
   documentName: DEFAULT_WORKFLOW_NAME,
   renameDocument: (name) =>
     set((state) => {
+      if (isEditingLocked()) return state
       const documentName = name.trim() || DEFAULT_WORKFLOW_NAME
       return documentName === state.documentName ||
         documentName.length > DOCUMENT_LIMITS.name
@@ -185,7 +188,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
   pasteCount: 0,
   beginEdit: (kind) =>
     set((state) =>
-      state.transaction?.kind === kind
+      isEditingLocked() || state.transaction?.kind === kind
         ? state
         : {
             history: finishTransaction(state),
@@ -200,6 +203,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     ),
   undo: () =>
     set((state) => {
+      if (isEditingLocked()) return state
       const history = finishTransaction(state)
       const previous = history.past.at(-1)
       if (!previous) return state
@@ -210,6 +214,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     }),
   redo: () =>
     set((state) => {
+      if (isEditingLocked()) return state
       const history = finishTransaction(state)
       const next = history.future.at(-1)
       if (!next) return state
@@ -229,6 +234,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     }),
   paste: () =>
     set((state) => {
+      if (isEditingLocked()) return state
       const { clipboard, nodes, edges, pasteCount } = state
       if (
         !clipboard ||
@@ -270,25 +276,26 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
         edge.selected ? edge : { ...edge, selected: true },
       ),
     })),
-  replaceDocument: (document, source) =>
-    set((state) => {
-      return {
-        documentId: document.id,
-        documentName: document.name,
-        viewport: { ...document.viewport },
-        nodes: document.nodes.map((node) => ({
-          ...node,
-          position: { ...node.position },
-          data: { ...node.data },
-        })),
-        edges: document.edges.map((edge) => ({ ...edge })),
-        graphRevision: state.graphRevision + 1,
-        documentGeneration: state.documentGeneration + 1,
-        imported: source === 'import',
-        history: { past: [], future: [] },
-        transaction: undefined,
-      }
-    }),
+  replaceDocument: (document, source) => {
+    if (isEditingLocked()) return
+    useSimulationStore.getState().reset()
+    set((state) => ({
+      documentId: document.id,
+      documentName: document.name,
+      viewport: { ...document.viewport },
+      nodes: document.nodes.map((node) => ({
+        ...node,
+        position: { ...node.position },
+        data: { ...node.data },
+      })),
+      edges: document.edges.map((edge) => ({ ...edge })),
+      graphRevision: state.graphRevision + 1,
+      documentGeneration: state.documentGeneration + 1,
+      imported: source === 'import',
+      history: { past: [], future: [] },
+      transaction: undefined,
+    }))
+  },
   updateViewport: (viewport) =>
     set((state) => {
       const previous = state.viewport
@@ -300,20 +307,24 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     }),
   addNode: (type, position) =>
     set((state) =>
-      recordGraphEdit(state, {
-        nodes: [...state.nodes, createWorkflowNode(type, position)],
-        graphRevision: state.graphRevision + 1,
-      }),
+      isEditingLocked()
+        ? state
+        : recordGraphEdit(state, {
+            nodes: [...state.nodes, createWorkflowNode(type, position)],
+            graphRevision: state.graphRevision + 1,
+          }),
     ),
   updateNode: (id, changes) =>
     set((state) => {
+      if (isEditingLocked()) return state
       const { nodes } = state
       const node = nodes.find((item) => item.id === id)
       if (!node) return state
       const data = { ...node.data, ...changes }
       if (
         data.label === node.data.label &&
-        data.description === node.data.description
+        data.description === node.data.description &&
+        data.condition === node.data.condition
       )
         return state
       return recordGraphEdit(
@@ -328,6 +339,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     }),
   addEdge: (connection) =>
     set((state) => {
+      if (isEditingLocked()) return state
       const { nodes, edges } = state
       if (!canConnect(connection, nodes, edges)) return state
       return recordGraphEdit(state, {
@@ -365,6 +377,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     }),
   removeSelection: () =>
     set((state) => {
+      if (isEditingLocked()) return state
       const selectedNodes = new Set(selectSelectedNodeIds(state))
       const selectedEdges = new Set(selectSelectedEdgeIds(state))
       const removedNodes = new Set(
@@ -391,6 +404,12 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
     set((state) => {
       const { nodes, edges, graphRevision } = state
       const allowed = changes.toArray().filter((change) => {
+        if (
+          isEditingLocked() &&
+          change.type !== 'select' &&
+          change.type !== 'dimensions'
+        )
+          return false
         if (change.type === 'add' || change.type === 'replace') return false
         return (
           change.type !== 'remove' ||
@@ -440,7 +459,9 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
       const allowed = changes
         .toArray()
         .filter(
-          (change) => change.type === 'select' || change.type === 'remove',
+          (change) =>
+            change.type === 'select' ||
+            (change.type === 'remove' && !isEditingLocked()),
         )
       if (!allowed.length) return state
       const nextEdges = new EdgeChangeset<WorkflowEdge>(allowed).applyTo(edges)

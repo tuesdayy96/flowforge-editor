@@ -1,6 +1,8 @@
 import type { Edge, Node, XYPosition } from '@xyflow/react'
 import type { WorkflowNodeType } from '../domain/connection'
 
+import type { WorkflowCondition } from './workflowCondition'
+
 export const nodeLabels = {
   start: 'Start',
   action: 'Action',
@@ -9,7 +11,11 @@ export const nodeLabels = {
   end: 'End',
 } satisfies Record<WorkflowNodeType, string>
 
-export type WorkflowNodeData = { label: string; description: string }
+export type WorkflowNodeData = {
+  label: string
+  description: string
+  condition?: WorkflowCondition
+}
 export type WorkflowNode = Node<WorkflowNodeData, WorkflowNodeType> & {
   type: WorkflowNodeType
 }
@@ -24,11 +30,20 @@ export function projectGraph({
 }) {
   return {
     nodes: nodes.map(
-      ({ id, type, position: { x, y }, data: { label, description } }) => ({
+      ({
         id,
         type,
         position: { x, y },
-        data: { label, description },
+        data: { label, description, condition },
+      }) => ({
+        id,
+        type,
+        position: { x, y },
+        data: {
+          label,
+          description,
+          ...(condition && { condition: { ...condition } }),
+        },
       }),
     ),
     edges: edges.map(({ id, source, sourceHandle, target, targetHandle }) => ({

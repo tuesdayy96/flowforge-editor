@@ -235,7 +235,7 @@ test('walks through first-run onboarding and reopens it from the guide', async (
   await expect(
     dialog.getByRole('heading', { name: 'User guide' }),
   ).toBeVisible()
-  await expect(dialog.locator('ol > li')).toHaveCount(12)
+  await expect(dialog.locator('ol > li')).toHaveCount(13)
   await dialog.getByRole('button', { name: 'Restart tour' }).click()
   for (let step = 0; step < 4; step++)
     await dialog.getByRole('button', { name: 'Next', exact: true }).click()

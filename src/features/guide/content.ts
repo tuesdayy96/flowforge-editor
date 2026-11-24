@@ -48,6 +48,10 @@ export const guideContent = {
       title: 'Keyboard shortcuts',
       body: 'With focus on the canvas, use Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo, Ctrl/Cmd+C/V to copy or paste, Ctrl/Cmd+A to select all, Delete/Backspace to delete, and Ctrl/Cmd+0 to fit the view.',
     },
+    {
+      title: 'Workflow Simulator',
+      body: 'Open Simulator, choose one Start, and enter a JSON object. Configure each Condition in Properties with a dot-separated field path, operator, and JSON value. Equality compares values of the same type. Ordered comparisons require numbers. Use Start simulation and Step to advance one node at a time, or Run, Pause, Resume, and Stop to control autoplay. Choose a log entry to locate its node. Merge continues along the current path. The simulator checks workflow validity before starting and stops on missing inputs or after 500 steps.',
+    },
   ],
   ko: [
     {
@@ -97,6 +101,10 @@ export const guideContent = {
     {
       title: '키보드 단축키',
       body: '캔버스에 포커스가 있을 때 Ctrl/Cmd+Z 실행 취소, Ctrl/Cmd+Shift+Z 또는 Ctrl+Y 다시 실행, Ctrl/Cmd+C/V 복사·붙여넣기, Ctrl/Cmd+A 전체 선택, Delete/Backspace 삭제, Ctrl/Cmd+0 전체 보기를 사용할 수 있습니다.',
+    },
+    {
+      title: '워크플로 시뮬레이터',
+      body: '시뮬레이터를 열고 Start 하나를 선택한 뒤 JSON 객체를 입력하세요. 속성 패널에서 각 Condition의 필드 경로, 연산자, JSON 비교값을 설정하세요. 필드 경로는 점으로 구분합니다. 일치 비교에는 같은 자료형이 필요하며, 크기 비교에는 숫자가 필요합니다. 시뮬레이션 시작 후 한 단계 실행으로 노드를 하나씩 실행하거나 자동 실행, 일시 정지, 재개, 중지를 사용하세요. 로그를 선택하면 해당 노드로 이동합니다. Merge는 현재 경로를 이어서 진행합니다. 시작 전에 워크플로 유효성을 검사하며, 입력이 누락되거나 실행이 500단계를 초과하면 오류로 종료됩니다.',
     },
   ],
 }

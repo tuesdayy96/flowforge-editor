@@ -1,3 +1,7 @@
+import {
+  selectSimulationLocked,
+  useSimulationStore,
+} from '../store/simulationStore'
 import { useTranslation } from '@/shared/i18n'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { WorkflowDocumentError } from '../model/workflowDocument'
@@ -13,6 +17,7 @@ export function WorkflowFiles({
   onError: (error?: WorkflowFileError) => void
 }) {
   const t = useTranslation()
+  const locked = useSimulationStore(selectSimulationLocked)
   const input = useRef<HTMLInputElement>(null)
   const [reading, setReading] = useState(false)
 
@@ -25,7 +30,10 @@ export function WorkflowFiles({
     setReading(true)
     try {
       const document = await readWorkflowFile(file)
-      if (window.confirm(t('confirmImport'))) {
+      if (
+        !selectSimulationLocked(useSimulationStore.getState()) &&
+        window.confirm(t('confirmImport'))
+      ) {
         useWorkflowStore.getState().replaceDocument(document, 'import')
       }
     } catch (error) {
@@ -56,7 +64,7 @@ export function WorkflowFiles({
       <button
         type="button"
         className="toolbar-file"
-        disabled={reading}
+        disabled={reading || locked}
         onClick={() => input.current?.click()}
       >
         {t(reading ? 'reading' : 'importJson')}
