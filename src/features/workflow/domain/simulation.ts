@@ -1,11 +1,18 @@
 import type { GraphSnapshot } from '../model/workflowNode'
 import {
+  conditionPath,
   isConditionValue,
   type WorkflowCondition,
 } from '../model/workflowCondition'
 import { validateWorkflow } from './validation'
 
-type Input = Readonly<Record<string, unknown>>
+import {
+  lookupInput,
+  validateSimulationInput,
+  type SimulationInput,
+} from './simulationInput'
+
+export { validateSimulationInput } from './simulationInput'
 export type SimulationError =
   | 'invalidGraph'
   | 'invalidStart'
@@ -33,7 +40,7 @@ export interface SimulationState {
   log: readonly SimulationEvent[]
   error?: SimulationError
   snapshot?: GraphSnapshot
-  input?: Input
+  input?: SimulationInput
 }
 
 export const emptySimulation: SimulationState = {
@@ -45,19 +52,6 @@ export const emptySimulation: SimulationState = {
 
 export function isSimulationActive(status: SimulationStatus) {
   return status === 'ready' || status === 'running' || status === 'paused'
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-export function validateSimulationInput(text: string): Input | undefined {
-  try {
-    const input: unknown = JSON.parse(text)
-    return isObject(input) ? input : undefined
-  } catch {
-    return undefined
-  }
 }
 
 export function createSimulation(
@@ -83,13 +77,13 @@ export function createSimulation(
 
 export function evaluateCondition(
   condition: WorkflowCondition,
-  input: Input,
+  input: SimulationInput,
 ): boolean | undefined {
-  let actual: unknown = input
-  for (const key of condition.field.split('.')) {
-    if (!key || !isObject(actual) || !Object.hasOwn(actual, key)) return
-    actual = actual[key]
-  }
+  const path = conditionPath(condition.field)
+  if (!path) return
+  const result = lookupInput(input, path)
+  if (result.kind !== 'found') return
+  const actual = result.value
   const { operator, value } = condition
   if (!isConditionValue(actual) || typeof actual !== typeof value) return
   if (operator === 'eq') return actual === value

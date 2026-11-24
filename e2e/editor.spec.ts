@@ -8,6 +8,7 @@ import {
   drag,
   edges,
   nodes,
+  openCanvasMenu,
   openEditor,
   savedDraft,
 } from './editor'
@@ -164,8 +165,12 @@ test('restores saved edits and viewport and round-trips a JSON download', async 
   await expect(nodes(page, 'end')).toHaveCount(0)
   expect(JSON.parse(await savedDraft(page))).toEqual(saved)
   await expect(
-    page.getByRole('button', { name: 'Undo', exact: true }),
+    (await openCanvasMenu(page)).getByRole('menuitem', {
+      name: 'Undo',
+      exact: true,
+    }),
   ).toBeDisabled()
+  await page.keyboard.press('Escape')
 })
 
 test('changes language without changing custom data and restores the preference', async ({
@@ -198,8 +203,12 @@ test('changes language without changing custom data and restores the preference'
     nodes(page, 'start').getByRole('heading', { name: 'Custom entry' }),
   ).toBeVisible()
   await expect(
-    page.getByRole('button', { name: 'Undo', exact: true }),
+    (await openCanvasMenu(page)).getByRole('menuitem', {
+      name: 'Undo',
+      exact: true,
+    }),
   ).toBeEnabled()
+  await page.keyboard.press('Escape')
   await language.selectOption('ko')
   await expect(page.locator('html')).toHaveAttribute('lang', 'ko')
   await language.selectOption('en')

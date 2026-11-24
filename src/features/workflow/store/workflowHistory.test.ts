@@ -137,6 +137,74 @@ describe('editor history', () => {
   })
 })
 
+describe('contextual editing commands', () => {
+  it('duplicates selected nodes and internal links in one undo without replacing the clipboard', () => {
+    const state = getState()
+    state.addNode('action', position)
+    state.addNode('end', { x: 500, y: 200 })
+    const [start, action, end] = getState().nodes
+    connect(start.id, action.id)
+    connect(action.id, end.id)
+    state.selectNode(end.id)
+    state.copySelection()
+    const clipboard = getState().clipboard
+    state.applyNodeChanges(
+      new NodeChangeset<WorkflowNode>([
+        { type: 'select', id: end.id, selected: false },
+        { type: 'select', id: start.id, selected: true },
+        { type: 'select', id: action.id, selected: true },
+      ]),
+    )
+    state.clearHistory()
+    state.duplicateSelection()
+    const { nodes, edges, history } = getState()
+    expect(new Set(nodes.map(({ id }) => id)).size).toBe(5)
+    expect(new Set(edges.map(({ id }) => id)).size).toBe(3)
+    expect(edges[2]).toMatchObject({ source: nodes[3].id, target: nodes[4].id })
+    expect(getState().clipboard).toBe(clipboard)
+    expect(history.past).toHaveLength(1)
+    state.undo()
+    expect(getState().nodes).toHaveLength(3)
+    expect(getState().edges).toHaveLength(2)
+  })
+
+  it('pastes at a supplied flow position and retains incremental keyboard paste', () => {
+    const state = getState()
+    const [start] = state.nodes
+    state.selectNode(start.id)
+    state.copySelection()
+    state.clearHistory()
+    state.paste(position)
+    expect(getState().nodes[1].position).toEqual(position)
+    expect(getState().history.past).toHaveLength(1)
+    state.undo()
+    state.paste()
+    expect(getState().nodes[1].position).toEqual({
+      x: start.position.x + 32,
+      y: start.position.y + 32,
+    })
+  })
+
+  it('deletes only the targeted edge and preserves validation revision and undo semantics', () => {
+    const state = getState()
+    state.addNode('action', position)
+    state.addNode('end', position)
+    const [start, action, end] = getState().nodes
+    connect(start.id, action.id)
+    connect(action.id, end.id)
+    const [first, second] = getState().edges
+    state.selectAll()
+    state.clearHistory()
+    const revision = getState().graphRevision
+    state.removeEdge(second.id)
+    expect(getState().edges.map(({ id }) => id)).toEqual([first.id])
+    expect(getState().graphRevision).toBe(revision + 1)
+    expect(getState().history.past).toHaveLength(1)
+    state.undo()
+    expect(getState().edges.map(({ id }) => id)).toEqual([first.id, second.id])
+  })
+})
+
 describe('editor clipboard', () => {
   it('copies a single node and creates a new selected node with an offset', () => {
     const [start] = getState().nodes

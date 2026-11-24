@@ -1,5 +1,6 @@
-import { useTranslation } from '@/shared/i18n'
+import { usePreferences, useTranslation } from '@/shared/i18n'
 import { Handle, Position, type NodeProps, type NodeTypes } from '@xyflow/react'
+import { formatCondition } from '../model/workflowCondition'
 import { workflowPorts } from '../domain/connection'
 import { nodeLabels, type WorkflowNode } from '../model/workflowNode'
 
@@ -23,18 +24,24 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
       <h3>{data.label.trim() || nodeLabels[type]}</h3>
       {data.description && <p>{data.description}</p>}
       {type === 'condition' ? (
-        <div className="workflow-branches">
-          {outputs.map((id) => (
-            <div key={id} className={`workflow-branch workflow-branch--${id}`}>
-              {id}
-              <Handle
-                type="source"
-                id={id}
-                position={Position.Right}
-                aria-label={t('branchOutput', { output: id })}
-              />
-            </div>
-          ))}
+        <div>
+          <ConditionSummary condition={data.condition} />
+          <div className="workflow-branches">
+            {outputs.map((id) => (
+              <div
+                key={id}
+                className={`workflow-branch workflow-branch--${id}`}
+              >
+                {id}
+                <Handle
+                  type="source"
+                  id={id}
+                  position={Position.Right}
+                  aria-label={t('branchOutput', { output: id })}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
         outputs.map((id) => (
@@ -48,6 +55,23 @@ function NodeCard({ data, type }: NodeProps<WorkflowNode>) {
         ))
       )}
     </article>
+  )
+}
+
+function ConditionSummary({
+  condition,
+}: {
+  condition: WorkflowNode['data']['condition']
+}) {
+  const locale = usePreferences((state) => state.locale)
+  const t = useTranslation()
+  const summary = condition
+    ? formatCondition(condition, locale)
+    : t('conditionUnset')
+  return (
+    <p className="workflow-condition-summary" title={summary}>
+      {summary}
+    </p>
   )
 }
 

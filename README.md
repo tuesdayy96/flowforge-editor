@@ -52,9 +52,13 @@ Canvas shortcuts include Ctrl/Cmd+Z for undo, Ctrl/Cmd+Shift+Z or Ctrl+Y for red
 
 If a local draft fails to restore, the editor keeps it until you confirm replacement.
 
+## Edit from the canvas
+
+Select one or more nodes to use Copy, Duplicate, Delete, and More in the floating toolbar. Right-click a node or group for contextual actions, or right-click a connection to delete it. Right-click empty canvas for Paste at the pointer, Select all, Undo, Redo, and Fit view. With the canvas, a node, or a connection focused, press Shift+F10 to open its menu.
+
 ## Simulate a workflow
 
-Connect each output to a path that ends at an End node. For each Condition, save a field path, comparison operator and JSON value in Properties. For example, set `amount`, `gte` and `100000`, then enter `{"amount":150000}` in Simulator to take the `true` output.
+Connect each output to a path that ends at an End node. Double-click a Condition to choose an item, a comparison symbol, and a typed reference value. For example, save `Order total ≥ 100,000`, then enter `150000` in the simulator form to take the `true` output. The form lists the saved items automatically. Switch to JSON and select **Apply JSON** to use a draft. The reference remains part of the workflow, while the test input lasts for the current editor session.
 
 Choose a Start and select **Start simulation**. Use **Step** to execute one node or **Run** to advance automatically at the selected speed. **Pause**, **Resume**, **Stop** and **Reset** control the session. Choose a log entry to locate its node on the canvas. Editing resumes when the session finishes, stops or resets.
 
@@ -71,7 +75,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Phase 7 verification passed 92 Vitest tests and 10 Playwright Chromium tests. V8 coverage for the configured modules was 91.85% statements, 84.94% branches, 97.04% functions and 95.44% lines.
+Phase 7.6 verification passed 101 Vitest tests and 16 Playwright Chromium tests. V8 coverage for the configured modules was 92.86% statements, 87.37% branches, 97.48% functions and 96.14% lines.
 
 ## Technical decisions
 

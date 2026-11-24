@@ -15,12 +15,13 @@ import { WorkflowFiles, type WorkflowFileError } from './WorkflowFiles'
 import { documentErrorMessage } from './workflowMessages'
 import { LanguageSelect } from '@/shared/i18n/LanguageSelect'
 import { GuideControls } from '@/features/guide/GuideControls'
-import {
-  WorkflowEditorActions,
-  type MiniMapControls,
-} from './WorkflowEditorActions'
 import { WorkflowSaveStatus } from './WorkflowSaveStatus'
 import { WorkflowValidation } from './WorkflowValidation'
+
+export interface MiniMapControls {
+  showMiniMap: boolean
+  toggleMiniMap: () => void
+}
 
 export function WorkflowToolbar({
   persistence,
@@ -53,13 +54,6 @@ export function WorkflowToolbar({
     !documentName.trim() || documentName === DEFAULT_WORKFLOW_NAME
       ? t('untitled')
       : documentName.trim()
-  const canDeleteSelection = useWorkflowStore(
-    ({ nodes, edges }) =>
-      nodes.some((node) => node.selected && node.deletable !== false) ||
-      edges.some((edge) => edge.selected),
-  )
-  const removeSelection = useWorkflowStore((state) => state.removeSelection)
-
   function validate() {
     const { nodes, edges, graphRevision } = useWorkflowStore.getState()
     setValidation({
@@ -104,10 +98,15 @@ export function WorkflowToolbar({
         />
         <WorkflowSaveStatus persistence={persistence} />
         <div className="toolbar-actions">
-          <WorkflowEditorActions
-            showMiniMap={showMiniMap}
-            toggleMiniMap={toggleMiniMap}
-          />
+          <button
+            className="toolbar-file"
+            type="button"
+            aria-pressed={showMiniMap}
+            title={t('minimapTip')}
+            onClick={toggleMiniMap}
+          >
+            {t('minimap')}
+          </button>
           <WorkflowFiles onError={setFileError} />
           <button
             className="toolbar-validate"
@@ -117,15 +116,6 @@ export function WorkflowToolbar({
             onClick={validate}
           >
             {t('validate')}
-          </button>
-          <button
-            className="toolbar-delete"
-            type="button"
-            disabled={locked || !canDeleteSelection}
-            title={t('removeTip')}
-            onClick={removeSelection}
-          >
-            {t('remove')}
           </button>
           <button
             className="toolbar-file"

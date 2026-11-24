@@ -1,6 +1,14 @@
 import { readFile } from 'node:fs/promises'
 import { expect, test } from '@playwright/test'
-import { addNode, connect, drag, nodes, openEditor, savedDraft } from './editor'
+import {
+  addNode,
+  connect,
+  drag,
+  nodes,
+  openCanvasMenu,
+  openEditor,
+  savedDraft,
+} from './editor'
 
 test('keeps the marquee during drag and preserves group editing after release', async ({
   page,
@@ -13,11 +21,14 @@ test('keeps the marquee during drag and preserves group editing after release', 
   await start.click()
   await first.click({ modifiers: ['ControlOrMeta'] })
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(2)
+  await page.mouse.click(490, 560)
+  await expect(page.locator('.selection-toolbar')).toHaveCount(0)
   await page.keyboard.down('Shift')
   await page.mouse.move(460, 215)
   await page.mouse.down()
   await page.mouse.move(965, 495, { steps: 12 })
   await expect(page.locator('.react-flow__selection')).toBeVisible()
+  await expect(page.locator('.selection-toolbar')).toHaveCount(0)
   await expect(first).toHaveClass(/\bselected\b/)
   await expect(second).toHaveClass(/\bselected\b/)
   await page.mouse.up()
@@ -50,23 +61,33 @@ test('keeps the marquee during drag and preserves group editing after release', 
   expect(after).toHaveLength(2)
   expect(after[0]).not.toBe(before[0])
   expect(after[1]).not.toBe(before[1])
-  await page.getByRole('button', { name: 'Copy', exact: true }).click()
-  await page.getByRole('button', { name: 'Paste', exact: true }).click()
+  await page.getByRole('button', { name: 'Copy selected', exact: true }).click()
+  await (
+    await openCanvasMenu(page)
+  )
+    .getByRole('menuitem', { name: 'Paste', exact: true })
+    .click()
   await expect(nodes(page)).toHaveCount(5)
   await page
-    .getByRole('button', { name: 'Delete selection', exact: true })
+    .getByRole('button', { name: 'Delete selected', exact: true })
     .click()
   await expect(nodes(page)).toHaveCount(3)
-  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await (
+    await openCanvasMenu(page)
+  )
+    .getByRole('menuitem', { name: 'Undo', exact: true })
+    .click()
   await expect(nodes(page)).toHaveCount(5)
-  await page.getByRole('button', { name: 'Redo', exact: true }).click()
+  await (
+    await openCanvasMenu(page)
+  )
+    .getByRole('menuitem', { name: 'Redo', exact: true })
+    .click()
   await expect(nodes(page)).toHaveCount(3)
   await first.click()
   await page.mouse.click(490, 560)
   await expect(page.locator('.react-flow__node.selected')).toHaveCount(0)
-  await expect(
-    page.getByRole('button', { name: 'Copy', exact: true }),
-  ).toBeDisabled()
+  await expect(page.locator('.selection-toolbar')).toHaveCount(0)
   await expect(
     page.getByRole('heading', { name: 'No node selected' }),
   ).toBeVisible()
@@ -84,10 +105,12 @@ test('simulates both Condition branches and keeps history, storage, and export c
   await connect(page, condition, onTrue, 'true')
   await connect(page, condition, onFalse, 'false')
   await condition.click()
-  await page.getByLabel('Input field path').fill('amount')
-  await page.getByLabel('Operator', { exact: true }).selectOption('gte')
-  await page.getByLabel('Comparison value (JSON)').fill('100')
-  await page.getByRole('button', { name: 'Save comparison' }).click()
+  await page.getByLabel('Item to compare').fill('amount')
+  await page.getByLabel('Comparison', { exact: true }).selectOption('gte')
+  await page.getByLabel('Reference value').fill('100')
+  await page.getByRole('button', { name: 'Save' }).click()
+  const toolbar = page.getByRole('group', { name: 'Node actions' })
+  await toolbar.getByRole('button', { name: 'Copy', exact: true }).click()
   const before = await savedDraft(page)
   await page.getByRole('button', { name: 'Simulator', exact: true }).click()
   const sim = page.getByRole('region', { name: 'Simulator' })
@@ -98,12 +121,37 @@ test('simulates both Condition branches and keeps history, storage, and export c
   const startId = await start.getAttribute('data-id')
   if (!startId) throw new Error('Missing start ID')
   await sim.getByLabel('Start node').selectOption(startId)
+  await sim.getByLabel('Input mode').selectOption('json')
   await sim.getByLabel('Simulation input (JSON)').fill('{"amount":150}')
+  await button('Apply JSON').click()
   await button('Start simulation').click()
   await expect(start).toHaveClass(/simulation-node-current/)
   await expect(
-    page.getByRole('button', { name: 'Undo', exact: true }),
+    toolbar.getByRole('button', { name: 'Duplicate', exact: true }),
   ).toBeDisabled()
+  await expect(
+    toolbar.getByRole('button', { name: 'Delete node' }),
+  ).toBeDisabled()
+  await expect(
+    toolbar.getByRole('button', { name: 'Copy', exact: true }),
+  ).toBeEnabled()
+  await toolbar.getByRole('button', { name: 'More actions' }).click()
+  await expect(
+    page.getByRole('menuitem', { name: 'Edit properties' }),
+  ).toBeDisabled()
+  await page.keyboard.press('Escape')
+  const lockedMenu = await openCanvasMenu(page)
+  await expect(
+    lockedMenu.getByRole('menuitem', { name: 'Undo', exact: true }),
+  ).toBeDisabled()
+  await expect(
+    lockedMenu.getByRole('menuitem', { name: 'Paste', exact: true }),
+  ).toBeDisabled()
+  await expect(
+    lockedMenu.getByRole('menuitem', { name: 'Fit view', exact: true }),
+  ).toBeEnabled()
+  await page.keyboard.press('Escape')
+  await page.keyboard.press('ControlOrMeta+z')
   await expect(
     page.getByRole('button', { name: 'Add Action node' }),
   ).toBeDisabled()
@@ -117,6 +165,7 @@ test('simulates both Condition branches and keeps history, storage, and export c
   await expect(status).toHaveText('Completed')
   await button('Reset').click()
   await sim.getByLabel('Simulation input (JSON)').fill('{"amount":50}')
+  await button('Apply JSON').click()
   await sim.getByLabel('Run speed').selectOption('1000')
   await button('Start simulation').click()
   await button('Run').click()
@@ -146,10 +195,14 @@ test('simulates both Condition branches and keeps history, storage, and export c
   expect(JSON.parse(await readFile(await file.path(), 'utf8'))).toEqual(
     JSON.parse(before),
   )
-  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await (
+    await openCanvasMenu(page)
+  )
+    .getByRole('menuitem', { name: 'Undo', exact: true })
+    .click()
   await condition.click()
   await page.getByRole('button', { name: 'Simulator', exact: true }).click()
-  await expect(page.getByLabel('Input field path')).toHaveValue('')
+  await expect(page.getByLabel('Item to compare')).toHaveValue('')
 })
 
 test('stops a pending automatic step', async ({ page }) => {

@@ -60,7 +60,10 @@ interface WorkflowState {
   canRedo: () => boolean
   clearHistory: () => void
   copySelection: () => void
-  paste: () => void
+  paste: (position?: XYPosition) => void
+  duplicateSelection: () => void
+  removeNodes: (ids: string[]) => void
+  removeEdge: (id: string) => void
   selectAll: () => void
   replaceDocument: (
     document: WorkflowDocument,
@@ -166,6 +169,65 @@ function removeIncidentEdges(
   )
 }
 
+function insertGraph(
+  state: WorkflowState,
+  graph: GraphSnapshot | undefined,
+  offset: number,
+  position?: XYPosition,
+) {
+  if (
+    isEditingLocked() ||
+    !graph ||
+    state.nodes.length + graph.nodes.length > DOCUMENT_LIMITS.nodes ||
+    state.edges.length + graph.edges.length > DOCUMENT_LIMITS.edges
+  )
+    return
+  const occupied = new Set([...state.nodes, ...state.edges].map(({ id }) => id))
+  const inserted = duplicateGraph(graph, occupied, offset, position)
+  if (!inserted) return
+  return recordGraphEdit(state, {
+    nodes: [
+      ...state.nodes.map((node) =>
+        node.selected ? { ...node, selected: false } : node,
+      ),
+      ...inserted.nodes,
+    ],
+    edges: [
+      ...state.edges.map((edge) =>
+        edge.selected ? { ...edge, selected: false } : edge,
+      ),
+      ...inserted.edges,
+    ],
+    graphRevision: state.graphRevision + 1,
+  })
+}
+
+function removeElements(
+  state: WorkflowState,
+  nodeIds: string[],
+  edgeIds: string[],
+) {
+  if (isEditingLocked()) return state
+  const selectedNodes = new Set(nodeIds)
+  const selectedEdges = new Set(edgeIds)
+  const removedNodes = new Set(
+    state.nodes
+      .filter((node) => node.deletable !== false && selectedNodes.has(node.id))
+      .map((node) => node.id),
+  )
+  const edges = selectedEdges.size
+    ? state.edges.filter((edge) => !selectedEdges.has(edge.id))
+    : state.edges
+  if (!removedNodes.size && edges.length === state.edges.length) return state
+  return recordGraphEdit(state, {
+    nodes: removedNodes.size
+      ? state.nodes.filter((node) => !removedNodes.has(node.id))
+      : state.nodes,
+    edges: removeIncidentEdges(edges, removedNodes),
+    graphRevision: state.graphRevision + 1,
+  })
+}
+
 export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
   documentId: crypto.randomUUID(),
   documentName: DEFAULT_WORKFLOW_NAME,
@@ -232,38 +294,24 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
       const clipboard = copyGraph(state.nodes, state.edges)
       return clipboard ? { clipboard, pasteCount: 0 } : state
     }),
-  paste: () =>
+  paste: (position) =>
     set((state) => {
-      if (isEditingLocked()) return state
-      const { clipboard, nodes, edges, pasteCount } = state
-      if (
-        !clipboard ||
-        nodes.length + clipboard.nodes.length > DOCUMENT_LIMITS.nodes ||
-        edges.length + clipboard.edges.length > DOCUMENT_LIMITS.edges
+      const inserted = insertGraph(
+        state,
+        state.clipboard,
+        state.pasteCount + 1,
+        position,
       )
-        return state
-      const occupied = new Set([...nodes, ...edges].map(({ id }) => id))
-      const pasted = duplicateGraph(clipboard, occupied, pasteCount + 1)
-      if (!pasted) return state
-      return {
-        ...recordGraphEdit(state, {
-          nodes: [
-            ...nodes.map((node) =>
-              node.selected ? { ...node, selected: false } : node,
-            ),
-            ...pasted.nodes,
-          ],
-          edges: [
-            ...edges.map((edge) =>
-              edge.selected ? { ...edge, selected: false } : edge,
-            ),
-            ...pasted.edges,
-          ],
-          graphRevision: state.graphRevision + 1,
-        }),
-        pasteCount: pasteCount + 1,
-      }
+      if (!inserted) return state
+      return position
+        ? inserted
+        : { ...inserted, pasteCount: state.pasteCount + 1 }
     }),
+  duplicateSelection: () =>
+    set(
+      (state) =>
+        insertGraph(state, copyGraph(state.nodes, state.edges), 1) ?? state,
+    ),
   selectAll: () =>
     set((state) => ({
       ...(state.transaction?.kind === 'property'
@@ -279,6 +327,7 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
   replaceDocument: (document, source) => {
     if (isEditingLocked()) return
     useSimulationStore.getState().reset()
+    useSimulationStore.getState().clearInput()
     set((state) => ({
       documentId: document.id,
       documentName: document.name,
@@ -376,30 +425,15 @@ export const useWorkflowStore = create<WorkflowState>()((set, get) => ({
       }
     }),
   removeSelection: () =>
-    set((state) => {
-      if (isEditingLocked()) return state
-      const selectedNodes = new Set(selectSelectedNodeIds(state))
-      const selectedEdges = new Set(selectSelectedEdgeIds(state))
-      const removedNodes = new Set(
-        state.nodes
-          .filter(
-            (node) => node.deletable !== false && selectedNodes.has(node.id),
-          )
-          .map((node) => node.id),
-      )
-      if (!removedNodes.size && !selectedEdges.size) return state
-
-      const edges = selectedEdges.size
-        ? state.edges.filter((edge) => !selectedEdges.has(edge.id))
-        : state.edges
-      return recordGraphEdit(state, {
-        nodes: removedNodes.size
-          ? state.nodes.filter((node) => !removedNodes.has(node.id))
-          : state.nodes,
-        edges: removeIncidentEdges(edges, removedNodes),
-        graphRevision: state.graphRevision + 1,
-      })
-    }),
+    set((state) =>
+      removeElements(
+        state,
+        selectSelectedNodeIds(state),
+        selectSelectedEdgeIds(state),
+      ),
+    ),
+  removeNodes: (ids) => set((state) => removeElements(state, ids, [])),
+  removeEdge: (id) => set((state) => removeElements(state, [], [id])),
   applyNodeChanges: (changes) =>
     set((state) => {
       const { nodes, edges, graphRevision } = state

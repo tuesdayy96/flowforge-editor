@@ -1,3 +1,4 @@
+import { SimulationInputEditor } from './SimulationInputEditor'
 import { useId, useState } from 'react'
 import { useReactFlow } from '@xyflow/react'
 import { useTranslation } from '@/shared/i18n'
@@ -22,7 +23,8 @@ export function Simulator({
     useSimulationStore()
   const locked = isSimulationActive(simulation.status)
   const [selectedStart, setSelectedStart] = useState('')
-  const [input, setInput] = useState('{}')
+  const [mode, setMode] = useState<'form' | 'json'>('form')
+  const [draft, setDraft] = useState<string>()
   const starts = nodes.filter((node) => node.type === 'start')
   const startId = starts.some((node) => node.id === selectedStart)
     ? selectedStart
@@ -57,19 +59,13 @@ export function Simulator({
           </option>
         ))}
       </select>
-      <label htmlFor={`${id}-input`}>{t('simInput')}</label>
-      <textarea
-        id={`${id}-input`}
-        rows={4}
-        value={input}
-        disabled={locked}
-        aria-describedby={`${id}-hint`}
-        spellCheck={false}
-        onChange={(event) => setInput(event.target.value)}
+      <SimulationInputEditor
+        locked={locked}
+        mode={mode}
+        setMode={setMode}
+        draft={draft}
+        setDraft={setDraft}
       />
-      <p id={`${id}-hint`} className="simulation-hint">
-        {t('simInputHint')}
-      </p>
       <label htmlFor={`${id}-speed`}>{t('simSpeed')}</label>
       <select
         id={`${id}-speed`}
@@ -80,32 +76,48 @@ export function Simulator({
         <option value={500}>{t('simNormal')}</option>
         <option value={200}>{t('simFast')}</option>
       </select>
-      <div className="simulation-actions">
-        <button
-          type="button"
-          disabled={locked || !startId}
+      <div className="simulation-actions simulation-run-controls">
+        <RunControl
+          icon="⚑"
+          label={t('simStart')}
+          disabled={
+            locked || !startId || (mode === 'json' && draft !== undefined)
+          }
           onClick={() => {
             if (startId)
-              start(projectGraph(useWorkflowStore.getState()), startId, input)
+              start(projectGraph(useWorkflowStore.getState()), startId)
           }}
-        >
-          {t('simStart')}
-        </button>
-        <button type="button" disabled={!canStep} onClick={step}>
-          {t('simStep')}
-        </button>
-        <button type="button" disabled={!canStep} onClick={run}>
-          {t(status === 'paused' ? 'simResume' : 'simRun')}
-        </button>
-        <button type="button" disabled={status !== 'running'} onClick={pause}>
-          {t('simPause')}
-        </button>
-        <button type="button" disabled={!locked} onClick={stop}>
-          {t('simStop')}
-        </button>
-        <button type="button" disabled={status === 'idle'} onClick={reset}>
-          {t('simReset')}
-        </button>
+        />
+        <RunControl
+          icon="▸▏"
+          label={t('simStep')}
+          disabled={!canStep}
+          onClick={step}
+        />
+        <RunControl
+          icon="▶"
+          label={t(status === 'paused' ? 'simResume' : 'simRun')}
+          disabled={!canStep}
+          onClick={run}
+        />
+        <RunControl
+          icon="⏸︎"
+          label={t('simPause')}
+          disabled={status !== 'running'}
+          onClick={pause}
+        />
+        <RunControl
+          icon="■"
+          label={t('simStop')}
+          disabled={!locked}
+          onClick={stop}
+        />
+        <RunControl
+          icon="↺"
+          label={t('simReset')}
+          disabled={status === 'idle'}
+          onClick={reset}
+        />
       </div>
       {error && (
         <p role="alert" className="simulation-error">
@@ -151,5 +163,33 @@ export function Simulator({
         ))}
       </ol>
     </section>
+  )
+}
+
+function RunControl({
+  icon,
+  label,
+  disabled,
+  onClick,
+}: {
+  icon: string
+  label: string
+  disabled: boolean
+  onClick: () => void
+}) {
+  return (
+    <span className="simulation-run-control">
+      <button
+        type="button"
+        aria-label={label}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        <span aria-hidden="true">{icon}</span>
+      </button>
+      <span className="simulation-run-tooltip" aria-hidden="true">
+        {label}
+      </span>
+    </span>
   )
 }

@@ -36,6 +36,20 @@ The store records bounded snapshots of the persisted node and edge fields. A sna
 
 The editor clipboard projects selected nodes and edges with both endpoints selected. Paste allocates fresh node and edge IDs, remaps endpoints, revalidates connections, and applies temporary selection and an increasing offset. The full paste is one edit. The canvas registers its own shortcut listener and removes it on unmount. Toolbar and shortcuts use the same store actions, and React Flow provides the MiniMap and multi-selection.
 
+## Contextual editing
+
+The header retains document controls, validation, Simulator, MiniMap, Help and language. The canvas hosts a single React Flow NodeToolbar for the selected node IDs. The toolbar stays at screen scale, uses the group's bounds for placement, and adjusts near canvas edges.
+
+Canvas, node, selection and edge context events open one shared keyboard-accessible menu. Menu anchors and target IDs live in transient UI state. The menu dispatches existing commands and targeted delete or duplicate commands to Zustand. Contextual paste converts the pointer to flow coordinates. The canvas shortcut handler retains its existing commands and incremental paste offset. Ready, running and paused simulations disable document-changing commands in the interface and store.
+
+See the [contextual editing decision](decisions/phase-7.5-contextual-editing.md).
+
+## Condition editor and simulation input
+
+Double-click selects one node and shows its properties when the simulator is unlocked. The simulator stays visible when it controls a locked run. Both sidebar views keep their session state across a toggle. The node summary formats the persisted reference value with the same operator symbols as the inspector.
+
+The simulation input domain resolves literal names and legacy paths, derives form fields, and adds missing examples to the runtime object without changing existing values. The simulation store keeps one applied input. The JSON editor keeps a separate draft and applies it explicitly, while the form writes typed values directly. Document replacement starts a fresh input session. Undo and Redo restore Condition settings and refresh the form without removing prior session values. See the [Phase 7.6 decision record](decisions/phase-7.6-condition-ux-and-simulation-input.md).
+
 ## Simulation
 
 `domain/simulation.ts` validates the graph and creates a detached snapshot of its execution-relevant data. Pure step transitions choose an outgoing handle, record an ordered event and advance the current node. End completes the run. Each Merge continues from its single outgoing edge. Invalid input or a broken path ends the run with a structured error. Execution is bounded to 500 steps.

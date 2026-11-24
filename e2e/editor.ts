@@ -13,6 +13,13 @@ export async function openEditor(page: Page, locale: 'en' | 'ko' = 'en') {
   await page.goto('/')
 }
 
+export async function openCanvasMenu(page: Page) {
+  const canvas = page.getByLabel('Workflow editing area')
+  await canvas.focus()
+  await canvas.press('Shift+F10')
+  return page.getByRole('menu', { name: 'Canvas menu' })
+}
+
 export function nodes(page: Page, type?: string) {
   return page.locator(type ? `.react-flow__node-${type}` : '.react-flow__node')
 }

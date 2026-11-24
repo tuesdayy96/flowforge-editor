@@ -194,7 +194,6 @@ button.node-card:hover {
   margin-left: auto;
 }
 
-.toolbar-delete,
 .toolbar-validate,
 .toolbar-file {
   padding: 6px 10px;
@@ -387,16 +386,89 @@ button.node-card:hover {
   text-decoration: underline;
 }
 
-.toolbar-delete:enabled:hover {
-  color: var(--end);
-  border-color: var(--end);
-  background: var(--end-bg);
+.selection-toolbar,
+.context-menu {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 3px 12px #18243924;
+  font-size: 0.8125rem;
 }
 
-.toolbar-delete:disabled {
+.selection-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  gap: 2px;
+  padding: 4px;
+}
+
+.selection-toolbar button {
+  border-radius: 5px;
+  padding: 4px 6px;
+  min-height: 28px;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: min(230px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 4px;
+}
+
+.context-item {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 16px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border-radius: 5px;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.context-divider {
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  border-radius: 0 0 5px 5px;
+  padding-top: 8px;
+}
+
+.context-icon {
+  text-align: center;
+}
+
+.context-menu kbd {
   color: var(--muted);
+  font-size: 0.65rem;
+  text-align: right;
+}
+
+.selection-toolbar button:enabled:hover,
+.context-item:not([aria-disabled='true']):hover,
+.context-item:focus-visible {
   background: var(--surface-muted);
-  opacity: 0.65;
+}
+
+.selection-toolbar button:focus-visible,
+.context-menu:focus-visible,
+.context-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.context-danger {
+  color: var(--end);
+}
+
+.selection-toolbar button:disabled,
+.context-item[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .workflow-node {
@@ -547,6 +619,67 @@ button.node-card:hover {
   padding: 4px 8px;
 }
 
+.simulation-run-controls {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.simulation-run-control {
+  position: relative;
+}
+
+.simulation-run-control button {
+  display: grid;
+  width: 100%;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  font:
+    1rem/1 system-ui,
+    sans-serif;
+}
+
+.simulation-run-control button:enabled:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface-muted);
+}
+
+.simulation-run-tooltip {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  width: max-content;
+  max-width: 9rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--surface);
+  font-size: 0.75rem;
+  text-align: center;
+  pointer-events: none;
+  translate: -50% 0;
+  visibility: hidden;
+}
+
+.simulation-run-control:nth-child(-n + 2) .simulation-run-tooltip {
+  left: 0;
+  translate: none;
+}
+
+.simulation-run-control:nth-last-child(-n + 2) .simulation-run-tooltip {
+  right: 0;
+  left: auto;
+  translate: none;
+}
+
+.simulation-run-control:hover .simulation-run-tooltip,
+.simulation-run-control:has(button:focus-visible) .simulation-run-tooltip {
+  visibility: visible;
+}
+
 .simulation :disabled,
 .condition-fields :disabled,
 .node-card:disabled {
@@ -582,6 +715,48 @@ button.node-card:hover {
   gap: 6px;
   padding: 16px 14px;
   font-size: 0.8125rem;
+}
+
+.condition-fields,
+.simulation-input,
+.simulation-input-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.simulation-condition-inputs {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  margin: 2px 0 8px;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.simulation-condition-inputs legend {
+  padding-inline: 4px;
+  font-weight: 700;
+}
+
+.simulation .simulation-condition-inputs :is(input, select) {
+  margin-bottom: 0;
+  background: var(--surface);
+}
+
+.condition-fields h3 {
+  margin-top: 4px;
+}
+
+.workflow-node .workflow-condition-summary {
+  margin: 5px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--condition);
+  font-weight: 650;
 }
 
 .inspector-fields dl {
@@ -621,7 +796,6 @@ button.node-card:hover {
 }
 
 .node-card:focus-visible,
-.toolbar-delete:focus-visible,
 .toolbar-validate:focus-visible,
 .toolbar-file:focus-visible,
 .workflow-save-status button:focus-visible,

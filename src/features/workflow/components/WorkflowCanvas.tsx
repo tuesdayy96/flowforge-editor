@@ -18,6 +18,9 @@ import { MAX_ZOOM, MIN_ZOOM } from '../model/workflowDocument'
 import { isTextEditor } from '../services/editorShortcuts'
 import { workflowNodeTypes } from '../nodes/WorkflowNodes'
 import { useWorkflowStore } from '../store/workflowStore'
+import { ContextMenu } from './ContextMenu'
+import { SelectionToolbar } from './SelectionToolbar'
+import { useCanvasMenu } from '../hooks/useCanvasMenu'
 
 const nodeOrigin: NodeOrigin = [0.5, 0.5]
 const beginDrag = () => useWorkflowStore.getState().beginEdit('drag')
@@ -31,13 +34,16 @@ const isValidConnection: IsValidConnection = (connection) => {
 export function WorkflowCanvas({
   surfaceRef,
   showMiniMap,
+  onEditProperties,
 }: {
   surfaceRef: RefObject<HTMLDivElement | null>
   showMiniMap: boolean
+  onEditProperties: () => void
 }) {
   const t = useTranslation()
   const locked = useSimulationStore(selectSimulationLocked)
   useEditorShortcuts(surfaceRef)
+  const contextual = useCanvasMenu(surfaceRef, onEditProperties)
   const nodes = useWorkflowStore((state) => state.nodes)
   const edges = useWorkflowStore((state) => state.edges)
   const { currentNodeId, error, visitedNodeIds, traversedEdgeIds } =
@@ -88,6 +94,7 @@ export function WorkflowCanvas({
         className="canvas-surface"
         tabIndex={0}
         aria-label={t('editingArea')}
+        onKeyDownCapture={contextual.onKeyDown}
         onPointerDownCapture={(event) => {
           if (
             !isTextEditor(event.target) &&
@@ -123,6 +130,22 @@ export function WorkflowCanvas({
           }}
           nodeTypes={workflowNodeTypes}
           nodeOrigin={nodeOrigin}
+          onNodeDoubleClick={(event, node) => {
+            if (isTextEditor(event.target)) return
+            const state = useWorkflowStore.getState()
+            state.selectNode(node.id)
+            if (!selectSimulationLocked(useSimulationStore.getState()))
+              onEditProperties()
+          }}
+          onNodeContextMenu={(event, node) =>
+            contextual.nodeContext(event, node.id)
+          }
+          onSelectionContextMenu={contextual.selectionContext}
+          onEdgeContextMenu={(event, edge) =>
+            contextual.edgeContext(event, edge.id)
+          }
+          onPaneContextMenu={contextual.paneContext}
+          onPaneClick={() => contextual.close()}
           onNodesChange={applyNodeChanges}
           onEdgesChange={applyEdgeChanges}
           isValidConnection={isValidConnection}
@@ -135,6 +158,11 @@ export function WorkflowCanvas({
           deleteKeyCode={null}
           forceColorMode="light"
         >
+          <SelectionToolbar
+            surfaceRef={surfaceRef}
+            openMenu={contextual.more}
+            expanded={Boolean(contextual.menu?.fromMore)}
+          />
           <Background gap={22} size={1.25} color="var(--canvas-dot)" />
           <Controls
             position="bottom-left"
@@ -150,6 +178,13 @@ export function WorkflowCanvas({
             />
           )}
         </ReactFlow>
+        {contextual.menu && (
+          <ContextMenu
+            key={contextual.menu.sequence}
+            {...contextual.menu}
+            close={contextual.close}
+          />
+        )}
       </div>
     </main>
   )

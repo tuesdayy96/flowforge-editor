@@ -1,3 +1,4 @@
+import type { XYPosition } from '@xyflow/react'
 import { canConnect } from '../domain/connection'
 import {
   projectGraph,
@@ -22,6 +23,7 @@ export function duplicateGraph(
   clipboard: GraphSnapshot,
   occupied: Set<string>,
   pasteNumber: number,
+  position?: XYPosition,
 ) {
   const ids = new Map<string, string>()
   function nextId() {
@@ -32,13 +34,19 @@ export function duplicateGraph(
   }
 
   const offset = pasteNumber * PASTE_OFFSET
+  const xOffset = position
+    ? position.x - Math.min(...clipboard.nodes.map((node) => node.position.x))
+    : offset
+  const yOffset = position
+    ? position.y - Math.min(...clipboard.nodes.map((node) => node.position.y))
+    : offset
   const nodes = clipboard.nodes.map((node) => {
     const id = nextId()
     ids.set(node.id, id)
     return {
       ...node,
       id,
-      position: { x: node.position.x + offset, y: node.position.y + offset },
+      position: { x: node.position.x + xOffset, y: node.position.y + yOffset },
       data: { ...node.data },
       selected: true,
     }
